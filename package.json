@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mantine/hooks": "^7.17.4",
+    "axios": "^1.12.2",
     "bootstrap": "^5.3.5",
     "hooks": "^0.3.2",
     "react": "^19.0.0",
