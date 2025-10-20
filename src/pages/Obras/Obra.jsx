@@ -1,112 +1,75 @@
+
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import './Obra.css';
-import logo from '../../assets/images/um.png';
-import { useParams } from 'react-router-dom';
+import http from '../../common/http-common';
 import PostagemService from '../../services/PostagemService';
-import GeneroService from '../../services/GeneroService';
+import TrendingSection from '../../components/TrendingSection/TrendingSection';
+import Splash from '../../components/Splash/Splash';
+
 
 function Obra() {
-  const { id } = useParams();
-  const [postagens, setPostagens] = useState([]);
-  const [generos, setGeneros] = useState([]);
-  const [selectedGenreId, setSelectedGenreId] = useState(0);
-  const [slideIndex, setSlideIndex] = useState(0);
-
-  // 🔄 Carrega postagens e gêneros ao montar
-  useEffect(() => {
-    PostagemService.findByCategoriaAndGenero(id, selectedGenreId)
-      .then(response => {
-        setPostagens(response.data); 
-      })
-      .catch(console.log);
-
-  GeneroService.findByCategoria(id)
-      .then(response => {
-        setGeneros(response.data)
-      })
-      .catch(console.log);
-  }, [id, selectedGenreId]);
+  const navigate = useNavigate();
+  const [postsByGenre, setPostsByGenre] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    setSlideIndex(0);
-  }, [postagens]);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Busca categorias 4 (Comunidade) e 5 (Obras Literárias)
+        const [resp4, resp5] = await Promise.all([
+          PostagemService.findByCategoria(4),
+          PostagemService.findByCategoria(5)
+        ]);
+        const posts4 = resp4.data || [];
+        const posts5 = resp5.data || [];
+        const postagens = [...posts4, ...posts5];
 
-  useEffect(() => {
-    if (postagens.length === 0) return;
-    const interval = setInterval(() => {
-      setSlideIndex(prev => (prev + 1) % postagens.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [postagens.length]);
+        const agrupado = postagens.reduce((acc, post) => {
+          const generoNome = post.genero?.nome || 'Sem Gênero';
+          if (!acc[generoNome]) acc[generoNome] = [];
+          acc[generoNome].push(post);
+          return acc;
+        }, {});
 
-  const plusSlides = (n) => {
-    setSlideIndex(prev => (prev + n + postagens.length) % postagens.length);
-  };
+        setPostsByGenre(agrupado);
+      } catch (err) {
+        console.error('Erro ao carregar obras:', err);
+        setError('Erro ao carregar obras.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const currentSlide = (n) => {
-    setSlideIndex(n - 1);
-  };
+    fetchData();
+  }, []);
+
+  if (showSplash) return <Splash duration={800} onFinish={() => setShowSplash(false)} />;
+  if (loading) return <div style={{padding: 24, color: '#fff'}}>Carregando...</div>;
+  if (error) return <div style={{padding: 24, color: '#ff7777'}}>{error}</div>;
 
   return (
-    <div className='layout'>
+    <div className="layout">
       <Sidebar />
       <main className='main-content'>
-        <div className="genre-selection">
-          <h5>🎯 Selecione o Gênero</h5>
-          <div className="genres-grid">
-            <div
-              className={`genre-card ${selectedGenreId === 0 ? 'selected' : ''}`}
-              onClick={() => setSelectedGenreId(0)}
-            >
-              <h5>Todos</h5>
-            </div>
-            {generos.map(genero => (
-              <div
-                key={genero.id}
-                className={`genre-card ${selectedGenreId === genero.id ? 'selected' : ''}`}
-                onClick={() => setSelectedGenreId(genero.id)}
-              >
-                <h5>{genero.nome}</h5>
-              </div>
-            ))}
-          </div>
-        </div>
-        {postagens.length === 0 ? (
-          <p style={{ textAlign: 'center' }}>Nenhuma postagem encontrada.</p>
-        ) : (
-          <div className="slideshow-container">
-            {postagens.map((postagem, index) => (
-              <div
-                key={index}
-                className={`mySlides fade ${slideIndex === index ? 'active' : ''}`}
-                style={{ display: slideIndex === index ? 'block' : 'none' }}
-              >
-                <div className="numbertext">{index + 1} / {postagens.length}</div>
-                <img
-                  src={postagem.conteudo ? `data:image/jpeg;base64,${postagem.conteudo}` : logo}
-                  style={{ width: '100%' }}
-                  alt={`Slide ${index + 1}`}
-                />
-                <div className="text">{postagem.legenda}</div>
-              </div>
-            ))}
-
-            <button className="prev" onClick={() => plusSlides(-1)}>❮</button>
-            <button className="next" onClick={() => plusSlides(1)}>❯</button>
-          </div>
-        )}
-        <br />
-
-        <div className="dots-wrapper" style={{ textAlign: 'center' }}>
-          {postagens.map((_, index) => (
-            <span
-              key={index}
-              className={`dot ${slideIndex === index ? 'active' : ''}`}
-              onClick={() => currentSlide(index + 1)}
-            ></span>
-          ))}
-        </div>
+        {Object.entries(postsByGenre).map(([genero, postagens]) => (
+          <TrendingSection
+            key={genero}
+            title={`${genero} - Obras Literárias/Fotografias`}
+            color="linear-gradient(0deg, #00ff66 0%, #00bfff 100%)"
+            artworks={postagens.map(post => ({
+              title: post.legenda || 'Sem título',
+              artist: post.usuario?.nome || 'Artista Desconhecido',
+              cover: post.id ? `${http.mainInstance.defaults.baseURL}postagem/image/${post.id}` : 'https://placehold.co/400x400?text=Sem+Imagem',
+              id: post.id
+            }))}
+            onArtworkClick={art => navigate(`/postagem/${art.id}`)}
+          />
+        ))}
       </main>
     </div>
   );

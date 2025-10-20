@@ -1,0 +1,27 @@
+.splash-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 10%, rgba(255,255,255,0.02), rgba(0,0,0,0.85));
+  z-index: 9999;
+  animation: splash-fade 400ms ease-in-out;
+}
+
+.splash-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-logo {
+  width: 140px;
+  height: auto;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.6));
+}
+
+@keyframes splash-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

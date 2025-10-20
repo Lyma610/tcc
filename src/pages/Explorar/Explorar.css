@@ -113,6 +113,13 @@
   justify-content: center;
   color: white;
   font-size: 20px;
+  overflow: hidden;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-name-container {
@@ -283,27 +290,23 @@
   gap: 20px;
 }
 
-.suggestions-widget, .trending-widget {
-  background: rgba(31, 41, 55, 0.9);
+.suggestions-widget {
+  background: rgba(31, 41, 55, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(75, 85, 99, 0.2);
   transition: all 0.3s ease;
 }
 
-.suggestions-widget:hover, .trending-widget:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  border-color: rgba(124, 58, 237, 0.5);
-}
-
-.suggestions-widget h3, .trending-widget h3 {
-  font-size: 1rem;
+.suggestions-widget h3 {
+  font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 16px;
   color: #f9fafb;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(75, 85, 99, 0.2);
 }
 
 .suggestion-item {
@@ -328,6 +331,13 @@
   justify-content: center;
   color: white;
   font-size: 20px;
+  overflow: hidden;
+}
+
+.suggestion-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .suggestion-info {
@@ -342,28 +352,31 @@
 }
 
 .suggestion-info .username {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #7c3aed;
   margin: 0;
   font-weight: 500;
+  display: block;
 }
 
 .suggestion-info .category {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #d1d5db;
-  margin: 2px 0;
+  margin: 4px 0;
   font-style: italic;
+  display: block;
 }
 
 .suggestion-info .followers {
   font-size: 0.8rem;
-  color: #d1d5db;
+  color: #9ca3af;
   margin: 0;
+  display: inline-block;
 }
 
 .btn-follow {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  color: white;
+  background: #ffffff;
+  color: #7c3aed;
   border: none;
   padding: 8px 18px;
   border-radius: 20px;
@@ -371,44 +384,16 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-follow:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(135deg, #5b21b6 0%, #a855f7 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  background: #f9fafb;
 }
 
-.trending-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(229, 229, 229, 0.5);
-  transition: all 0.2s ease;
-}
 
-.trending-item:hover {
-  padding-left: 8px;
-  background: linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.05) 100%);
-}
-
-.trending-item:last-child {
-  border-bottom: none;
-}
-
-.hashtag {
-  font-weight: 700;
-  color: #7c3aed;
-  font-size: 0.95rem;
-}
-
-.count {
-  font-size: 0.8rem;
-  color: #d1d5db;
-  font-weight: 500;
-}
 
 @media (max-width: 1024px) {
   .main-layout {

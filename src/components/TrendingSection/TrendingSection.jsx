@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ArtworkCard from '../ArtworkCard/ArtworkCard';
 import './TrendingSection.css';
 
-function TrendingSection({ title, color, artworks }) {
+function TrendingSection({ title, color, artworks, onArtworkClick }) {
   const [startIdx, setStartIdx] = useState(0);
   const cardsPerPage = 5;
   const endIdx = startIdx + cardsPerPage;
@@ -31,7 +31,13 @@ function TrendingSection({ title, color, artworks }) {
             style={{ transform: `translateX(${translateX}px)` }}
           >
             {artworks.map((art, idx) => (
-              <ArtworkCard key={idx} title={art.title} artist={art.artist} cover={art.cover} />
+              <ArtworkCard
+                key={idx}
+                title={art.title}
+                artist={art.artist}
+                cover={art.cover}
+                onClick={onArtworkClick ? () => onArtworkClick(art) : undefined}
+              />
             ))}
           </div>
         </div>

@@ -9,12 +9,85 @@ const findById = (id) => {
     return http.mainInstance.get(API_URL + `findById/${id}`);
 };
 
-const signup = (nome, email, password) => {
-    return http.mainInstance.post(API_URL + "signup", {
+const normalizeUser = (user) => {
+    if (!user) return user;
+    try {
+        // Se já tiver foto como dataURL
+        if (user.foto && typeof user.foto === 'string' && user.foto.startsWith('data:image')) {
+            user.fotoPerfil = user.foto;
+            return user;
+        }
+
+        // Caso foto venha como objeto { data: [...] } ou array de bytes
+        const fotoArray = user.foto && (user.foto.data || user.foto);
+        if (fotoArray && fotoArray.length) {
+            const bytes = new Uint8Array(fotoArray);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64String = btoa(binary);
+            user.fotoPerfil = `data:image/jpeg;base64,${base64String}`;
+            try {
+                // também criar um object URL (mais eficiente para renderização)
+                const blob = new Blob([bytes], { type: 'image/jpeg' });
+                if (typeof URL !== 'undefined' && URL.createObjectURL) {
+                    user.fotoPerfilBlob = URL.createObjectURL(blob);
+                }
+            } catch (e) {
+                // não crítico, apenas log
+                console.warn('Não foi possível criar blob URL da foto', e);
+            }
+        } else if (user.foto && typeof user.foto === 'string') {
+            // pode ser que backend retorne apenas a string base64 sem prefixo
+            const possibleBase64 = user.foto;
+            const isBase64 = /^[A-Za-z0-9+/=\r\n]+$/.test(possibleBase64.replace(/\s+/g, ''));
+            if (isBase64) {
+                const dataUrl = `data:image/jpeg;base64,${possibleBase64.replace(/\s+/g, '')}`;
+                user.fotoPerfil = dataUrl;
+                try {
+                    // criar blob url a partir do dataURL
+                    const byteString = atob(possibleBase64.replace(/\s+/g, ''));
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+                    const blob = new Blob([ia], { type: 'image/jpeg' });
+                    if (typeof URL !== 'undefined' && URL.createObjectURL) {
+                        user.fotoPerfilBlob = URL.createObjectURL(blob);
+                    }
+                } catch (e) {
+                    console.warn('Não foi possível criar blob url a partir do base64', e);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Erro ao normalizar usuário:', err, user);
+    }
+    return user;
+};
+
+const getCurrentUserFull = async () => {
+    const current = getCurrentUser();
+    if (!current || !current.id) return null;
+    const resp = await findById(current.id);
+    const user = resp.data || resp;
+    const normalized = normalizeUser(user);
+    try {
+        localStorage.setItem('user', JSON.stringify(normalized));
+    } catch (err) {
+        console.warn('Não foi possível gravar usuário normalizado no localStorage', err);
+    }
+    return normalized;
+};
+
+const signup = (nome, email, senha) => {
+    const usuario = {
         nome,
         email,
-        password,
-    });
+        senha,
+        nivelAcesso: 'USER'
+    };
+    return http.mainInstance.post(API_URL + "create", usuario);
 };
 
 const signin = async (email, senha) => {
@@ -46,8 +119,13 @@ const create = data => {
     return http.mainInstance.post(API_URL + "create", formData);
 };
 
-const update = (id, data) => {
-    return http.multipartInstance.put(API_URL + `update/${id}`, data);
+const editar = async (id, data) => {
+    console.log('Enviando dados para edição:', id);
+    return http.multipartInstance.put(API_URL + `editar/${id}`, data, {
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 30000 // Aumentar o timeout para 30 segundos
+    });
 };
 
 const inativar = (id) => {
@@ -59,10 +137,9 @@ const reativar = (id) => {
 };
 
 const alterarSenha = (id, data) => {
-    const formData = new FormData();
-    formData.append('senha', data.senha);
- 
-    return http.mainInstance.put(API_URL + `alterarSenha/${id}`, formData);
+    return http.mainInstance.put(API_URL + `alterarSenha/${id}`, {
+        senha: data.senha
+    });
 };
 
 const findByNome = nome => {
@@ -77,8 +154,9 @@ const UsuarioService = {
     signin,
     logout,
     getCurrentUser,
+    getCurrentUserFull,
     create,
-    update,
+    editar,
     inativar,
     reativar,
     alterarSenha,

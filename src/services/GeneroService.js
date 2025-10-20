@@ -10,8 +10,8 @@ const findById = id => {
 };
 
 
-const findByCategoria = id => {
-  return http.mainInstance.get(API_URL + `findByCategoria/${id}`);
+const findByCategoria = categoriaId => {
+  return http.mainInstance.get(API_URL + `findByCategoria/${categoriaId}`);
 };
 
 const GeneroService = {

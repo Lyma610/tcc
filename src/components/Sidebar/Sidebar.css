@@ -15,14 +15,16 @@
 .sidebar-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   gap: 12px;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 40px;
 }
 .sidebar-logo img {
-  width: 48px;
-  height: 48px;
+  width: 100px;
+  height: 100px;
 }
 
 .sidebar-nav {

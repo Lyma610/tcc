@@ -10,6 +10,29 @@ const mainInstance = axios.create({
   }
 });
 
+// Adiciona interceptors para logging
+mainInstance.interceptors.request.use(
+  config => {
+    console.log('Requisição:', config.method.toUpperCase(), config.baseURL + config.url);
+    return config;
+  },
+  error => {
+    console.error('Erro na requisição:', error);
+    return Promise.reject(error);
+  }
+);
+
+mainInstance.interceptors.response.use(
+  response => {
+    console.log('Resposta:', response.status, response.data);
+    return response;
+  },
+  error => {
+    console.error('Erro na resposta:', error.response?.status, error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
 const multipartInstance = axios.create({
   baseURL: API_URL,
   headers: {

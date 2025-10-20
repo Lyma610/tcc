@@ -15,7 +15,8 @@ function PostagemNova() {
     const [formData, setFormData] = useState({
         legenda: '',
         descricao: '',
-        categoria: null
+        categoria: null,
+        genero: null
     });
 
     const [file, setFile] = useState("");
@@ -28,7 +29,6 @@ function PostagemNova() {
     const [generos, setGeneros] = useState([]);
 
     const getCategorias = () => {
-
         CategoriaService.findAll().then(
             (response) => {
                 const categorias = response.data;
@@ -37,19 +37,22 @@ function PostagemNova() {
         ).catch((error) => {
             console.log(error);
         })
-
     }
-    const getGeneros = () => {
 
-        GeneroService.findAll().then(
-            (response) => {
-                const generos = response.data;
-                setGeneros(generos);
+    const getGeneros = async (categoriaId = null) => {
+        try {
+            let response;
+            if (categoriaId) {
+                response = await PostagemService.findGenerosByCategoria(categoriaId);
+            } else {
+                response = await PostagemService.findGeneros();
             }
-        ).catch((error) => {
-            console.log(error);
-        })
-
+            console.log('Gêneros recebidos:', response.data);
+            setGeneros(response.data || []);
+        } catch (error) {
+            console.error('Erro ao buscar gêneros:', error);
+            setGeneros([]);
+        }
     }
     useEffect(() => {
         if (_dbRecords.current) {
@@ -126,25 +129,31 @@ function PostagemNova() {
         e.preventDefault();
         setIsUploading(true);
 
-
-        setTimeout(() => {
-            setIsUploading(false);
-            alert('🎉 Conteúdo publicado com sucesso!');
-            // Reset form
-            PostagemService.create(file, formData, usuario).then(
-                (response) => {
-                }, (error) => {
-                    const resMessage =
-                        (error.response &&
-                            error.response.data &&
-                            error.response.data.message) ||
-                        error.message ||
-                        error.toString();
-                }
-            )
-            setPreview(null);
-            setActiveStep(1);
-        }, 2000);
+        // Create post with all required data
+        PostagemService.create(file, formData, usuario)
+            .then((response) => {
+                setIsUploading(false);
+                alert('🎉 Conteúdo publicado com sucesso!');
+                // Reset form
+                setPreview(null);
+                setActiveStep(1);
+                setFormData({
+                    legenda: '',
+                    descricao: '',
+                    categoria: null,
+                    genero: null
+                });
+            })
+            .catch((error) => {
+                setIsUploading(false);
+                const resMessage =
+                    (error.response &&
+                        error.response.data &&
+                        error.response.data.message) ||
+                    error.message ||
+                    error.toString();
+                alert('Erro ao publicar: ' + resMessage);
+            });
     };
 
     const nextStep = () => {
@@ -251,7 +260,10 @@ function PostagemNova() {
                                         {categorias.map(cat => (
                                             <div key={cat.id}
                                                 className={`category-card ${formData.categoria === cat.id ? 'selected' : ''}`}
-                                                onClick={() => setFormData(prev => ({ ...prev, categoria: cat.id }))}
+                                                onClick={() => {
+                                                    setFormData(prev => ({ ...prev, categoria: cat.id, genero: null }));
+                                                    getGeneros(cat.id);
+                                                }}
                                             >
                                                 <div className="category-icon">
                                                     <img src={`/assets/icons/${cat.icone}.png`} alt="" />
@@ -272,7 +284,7 @@ function PostagemNova() {
                                 <h3>📝 Informações do Conteúdo</h3>
 
                                 <div className="category-selection">
-                                    <h4>🎯 Selecione o Genero</h4>
+                                    <h4>🎯 Selecione o Gênero</h4>
                                     <div className="categories-grid">
                                         {generos.map(genero => (
                                             <div key={genero.id}

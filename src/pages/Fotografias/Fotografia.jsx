@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import './Fotografia.css';
 import logo from '../../assets/images/um.png';
+import { getImageSrc } from '../../common/image-utils';
+import http from '../../common/http-common';
 import { useParams } from 'react-router-dom';
 import PostagemService from '../../services/PostagemService';
 import GeneroService from '../../services/GeneroService';
@@ -84,7 +86,11 @@ function Fotografia() {
               >
                 <div className="numbertext">{index + 1} / {postagens.length}</div>
                 <img
-                  src={postagem.conteudo ? `data:image/jpeg;base64,${postagem.conteudo}` : logo}
+                  src={
+                    postagem.id
+                      ? `${http.mainInstance.defaults.baseURL}postagem/image/${postagem.id}`
+                      : (getImageSrc(postagem.conteudo) || logo)
+                  }
                   style={{ width: '100%' }}
                   alt={`Slide ${index + 1}`}
                 />

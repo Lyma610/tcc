@@ -1,13 +1,13 @@
 import './Sidebar.css';
 import { Link } from 'react-router-dom';
 import { FaCog, FaUser, FaBell } from 'react-icons/fa';
+import logoImage from '../../assets/images/logo.png';
 
 function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <img src="https://i.imgur.com/0y0y0y0.png" alt="Inspirart Logo" />
-        <span>Inspirart</span>
+        <img src={logoImage} alt="Inspirart Logo" />
       </div>
       <nav className="sidebar-nav">
         <Link to="/musicas"><span role="img" aria-label="músicas">🎵</span> músicas</Link>

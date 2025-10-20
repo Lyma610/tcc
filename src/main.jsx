@@ -7,18 +7,32 @@ import ArtesDigitais from './pages/ArtesDigitais/ArtsDigitais';
 import Fotografias from './pages/Fotografias/Fotografia';
 import Filmes from './pages/Filmes/Films';
 import Musicas from './pages/Musicas/Musics';
+import Perfil from './pages/Perfil/Perfil';
+import Publicar from './pages/Publicar/Publicar';
+import Explorar from './pages/Explorar/Explorar';
+import Configuracoes from './pages/Configuracoes/Configuracoes';
+import Notificacoes from './pages/Notificacoes/Notificacoes';
+import Obras from './pages/Obras/Obra';
+import PostagemDetalhe from './pages/Postagem/PostagemDetalhe';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-    <Routes>
-      <Route path="/artes-digitais" element={<ArtesDigitais />}/>
-      <Route path="/fotografias" element={<Fotografias />}/>
-      <Route path="/filmes" element={<Filmes />}/>
-      <Route path="/musicas" element={<Musicas />}/>
-      <Route path="/home" element={<Home />}/>
-      <Route path="/" element={<Login/>}/>
-    </Routes>
+      <Routes>
+        <Route path="/obras" element={<Obras />} />
+        <Route path="/postagem/:id" element={<PostagemDetalhe />} />
+        <Route path="/notificacoes" element={<Notificacoes />} />
+        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/explorar" element={<Explorar />} />
+        <Route path="/publicar" element={<Publicar />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/artes-digitais" element={<ArtesDigitais />} />
+        <Route path="/fotografias" element={<Fotografias />} />
+        <Route path="/filmes" element={<Filmes />} />
+        <Route path="/musicas" element={<Musicas />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/" element={<Login />} />
+      </Routes>
     </BrowserRouter>
   </StrictMode>,
 )

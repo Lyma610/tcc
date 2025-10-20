@@ -1,8 +1,16 @@
 import http from "../common/http-common";
 const API_URL = "postagem/";
 
-const findAll = () => {
-  return http.mainInstance.get(API_URL + "findAll");
+const findAll = async () => {
+  try {
+    console.log('Chamando API:', API_URL + "findAll");
+    const response = await http.mainInstance.get(API_URL + "findAll");
+    console.log('Resposta da API findAll:', response);
+    return response;
+  } catch (error) {
+    console.error('Erro ao buscar postagens:', error.response || error);
+    throw error;
+  }
 };
 
 const findCategorias = () => {
@@ -26,14 +34,31 @@ const findByGenero = id => {
 };
 
 const create = (file, data, usuario) => {
-  const payload = {
-    ...data,
-    file: data.file ,
-    usuario: usuario.id ,
-    categoria: data.categoria
-  };
+  const formData = new FormData();
+  
+  // Adiciona o arquivo se existir
+  if (file) {
+    formData.append('file', file);
+  }
+  // Adiciona campos simples
+  formData.append('legenda', data.legenda || '');
+  formData.append('descricao', data.descricao || '');
 
-  return http.multipartInstance.post(API_URL + "create", payload);
+  // Enviando objetos aninhados conforme esperado pelo @ModelAttribute no backend
+  if (data.categoria !== null && data.categoria !== undefined) {
+    formData.append('categoria.id', data.categoria);
+  }
+  if (data.genero !== null && data.genero !== undefined) {
+    formData.append('genero.id', data.genero);
+  }
+  if (usuario && usuario.id) {
+    formData.append('usuario.id', usuario.id);
+  }
+
+  // Opcional: status e data podem ser setados no backend; se quiser, envie também
+  // formData.append('statusPostagem', 'ATIVO');
+
+  return http.multipartInstance.post(API_URL + "create", formData);
 };
 
 
@@ -73,7 +98,14 @@ const addCardapio = (id) => {
 };
 
 const findByCategoriaAndGenero = (idCategoria, idGenero) => {
-  return http.mainInstance.get(API_URL + `findByCategoriaAndGenero/${idCategoria}/${idGenero}`);
+  const url = idGenero === 0 
+    ? API_URL + `findByCategoria/${idCategoria}`
+    : API_URL + `findByCategoriaAndGenero/${idCategoria}/${idGenero}`;
+  return http.mainInstance.get(url);
+};
+
+const findGenerosByCategoria = (categoriaId) => {
+  return http.mainInstance.get(API_URL + `findGenerosByCategoria/${categoriaId}`);
 };
 
 const PostagemService = {
@@ -88,7 +120,8 @@ const PostagemService = {
   inativar,
   reativar,
   addCardapio,
-  findByCategoriaAndGenero
+  findByCategoriaAndGenero,
+  findGenerosByCategoria
 };
 
 export default PostagemService;

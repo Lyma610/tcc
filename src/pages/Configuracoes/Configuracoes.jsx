@@ -44,7 +44,7 @@ function Configuracoes() {
                 <span>Notificações gerais</span>
                 <small>Receber todas as notificações da plataforma</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.notifications} onChange={() => handleToggle('notifications')} />
                 <span className="slider"></span>
               </label>
@@ -54,7 +54,7 @@ function Configuracoes() {
                 <span>Notificações por email</span>
                 <small>Receber resumos semanais por email</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.emailNotifications} onChange={() => handleToggle('emailNotifications')} />
                 <span className="slider"></span>
               </label>
@@ -64,7 +64,7 @@ function Configuracoes() {
                 <span>Notificações push</span>
                 <small>Alertas instantâneos no navegador</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.pushNotifications} onChange={() => handleToggle('pushNotifications')} />
                 <span className="slider"></span>
               </label>
@@ -81,7 +81,7 @@ function Configuracoes() {
                 <span>Modo escuro</span>
                 <small>Interface com cores escuras</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.darkMode} onChange={() => handleToggle('darkMode')} />
                 <span className="slider"></span>
               </label>
@@ -98,7 +98,7 @@ function Configuracoes() {
                 <span>Reprodução automática</span>
                 <small>Iniciar automaticamente o próximo conteúdo</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.autoPlay} onChange={() => handleToggle('autoPlay')} />
                 <span className="slider"></span>
               </label>
@@ -108,7 +108,7 @@ function Configuracoes() {
                 <span>Alta qualidade</span>
                 <small>Reproduzir em qualidade máxima disponível</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.highQuality} onChange={() => handleToggle('highQuality')} />
                 <span className="slider"></span>
               </label>
@@ -166,7 +166,7 @@ function Configuracoes() {
                 <span>Autenticação de dois fatores</span>
                 <small>Adicione uma camada extra de segurança</small>
               </div>
-              <label className="toggle">
+              <label className="toggle-">
                 <input type="checkbox" checked={settings.twoFactor} onChange={() => handleToggle('twoFactor')} />
                 <span className="slider"></span>
               </label>
