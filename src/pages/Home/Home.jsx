@@ -205,9 +205,6 @@ function Home() {
     <div className="home-layout">
       <Sidebar />
       <main className="main-content">
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
-          <SearchBar />
-        </div>
         <h2 className="recent-title">Baseado no que você viu recentemente</h2>
 
         {getRandomSections(posts, 2).map(({ categoria, genero, postagens }) => (
