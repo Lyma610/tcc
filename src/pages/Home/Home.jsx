@@ -140,6 +140,22 @@ function Home() {
     fetchData();
   }, []);
 
+  // Função para selecionar seções aleatórias
+  const getRandomSections = (postsObj, count = 2) => {
+    const allSections = [];
+    
+    // Cria array com todas as combinações categoria/gênero
+    Object.entries(postsObj).forEach(([categoria, generosPosts]) => {
+      Object.entries(generosPosts).forEach(([genero, postagens]) => {
+        allSections.push({ categoria, genero, postagens });
+      });
+    });
+    
+    // Embaralha e pega apenas 'count' seções
+    const shuffled = [...allSections].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  };
+
   if (showSplash) return <Splash duration={4000} onFinish={() => setShowSplash(false)} />;
   if (loading) return (
     <div style={{ 
@@ -194,27 +210,25 @@ function Home() {
         </div>
         <h2 className="recent-title">Baseado no que você viu recentemente</h2>
 
-        {Object.entries(posts).map(([categoria, generosPosts]) =>
-          Object.entries(generosPosts).map(([genero, postagens]) => (
-            <TrendingSection
-              key={`${categoria}-${genero}`}
-              title={genero === 'Sem Gênero' ? `#BOMBANDO em ${categoria}` : `#BOMBANDO em ${genero} - ${categoria}`}
-              color={genero?.toLowerCase().includes('terror') 
-                ? "linear-gradient(90deg, #ff3c3c 0%, #b92b27 100%)"
-                : "linear-gradient(0deg, #00ff66 0%, #00bfff 100%)"
-              }
-              artworks={postagens.map(post => ({
-                title: post.legenda || 'Sem título',
-                artist: post.usuario?.nome || 'Artista Desconhecido',
-                cover: post.id 
-                  ? `${http.mainInstance.defaults.baseURL}postagem/image/${post.id}`
-                  : 'https://placehold.co/400x400?text=Sem+Imagem',
-                id: post.id
-              }))}
-              onArtworkClick={art => navigate(`/postagem/${art.id}`)}
-            />
-          ))
-        )}
+        {getRandomSections(posts, 2).map(({ categoria, genero, postagens }) => (
+          <TrendingSection
+            key={`${categoria}-${genero}`}
+            title={genero === 'Sem Gênero' ? `#BOMBANDO em ${categoria}` : `#BOMBANDO em ${genero} - ${categoria}`}
+            color={genero?.toLowerCase().includes('terror') 
+              ? "linear-gradient(90deg, #ff3c3c 0%, #b92b27 100%)"
+              : "linear-gradient(0deg, #00ff66 0%, #00bfff 100%)"
+            }
+            artworks={postagens.map(post => ({
+              title: post.legenda || 'Sem título',
+              artist: post.usuario?.nome || 'Artista Desconhecido',
+              cover: post.id 
+                ? `${http.mainInstance.defaults.baseURL}postagem/image/${post.id}`
+                : 'https://placehold.co/400x400?text=Sem+Imagem',
+              id: post.id
+            }))}
+            onArtworkClick={art => navigate(`/postagem/${art.id}`)}
+          />
+        ))}
       </main>
     </div>
   );

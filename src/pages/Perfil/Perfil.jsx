@@ -7,7 +7,6 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import './Perfil.css';
 import './EditProfile.css';
 
-
 function Perfil() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('posts');
@@ -15,7 +14,6 @@ function Perfil() {
   const [userInfo, setUserInfo] = useState(null);
   const [stats, setStats] = useState({ posts: 0, followers: 0, following: 0, likes: 0 });
   const [posts, setPosts] = useState([]);
-  const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -24,6 +22,57 @@ function Perfil() {
     bio: '',
     nivelAcesso: 'USER'
   });
+
+  const [previewImage, setPreviewImage] = useState(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    senhaAtual: '',
+    novaSenha: '',
+    confirmarSenha: ''
+  });
+  const fileInputRef = useRef(null);
+  const compressedFileRef = useRef(null);
+
+  const convertPhotoToDataURL = (foto) => {
+    if (!foto) return null;
+    
+    try {
+      if (typeof foto === 'string') {
+        if (foto.startsWith('data:image')) return foto;
+        if (foto.length > 100) return `data:image/jpeg;base64,${foto}`;
+        return null;
+      }
+      
+      let fotoBytes;
+      
+      if (Array.isArray(foto)) {
+        fotoBytes = new Uint8Array(foto);
+      } else if (foto.data) {
+        fotoBytes = new Uint8Array(foto.data);
+      } else if (foto instanceof Uint8Array) {
+        fotoBytes = foto;
+      } else {
+        return null;
+      }
+      
+      const base64String = btoa(String.fromCharCode.apply(null, fotoBytes));
+      return `data:image/jpeg;base64,${base64String}`;
+    } catch (error) {
+      console.error('Erro ao converter foto:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && userInfo) {
+      setEditForm({
+        nome: userInfo.nome || '',
+        email: userInfo.email || '',
+        bio: userInfo.bio || '',
+        nivelAcesso: userInfo.nivelAcesso || 'USER'
+      });
+    }
+  }, [isEditing, userInfo]);
 
   const compressImage = (file) => {
     return new Promise((resolve) => {
@@ -34,8 +83,8 @@ function Perfil() {
         img.src = event.target.result;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 200; // Reduzido para 200px
-          const MAX_HEIGHT = 200; // Reduzido para 200px
+          const MAX_WIDTH = 200;
+          const MAX_HEIGHT = 200;
           let width = img.width;
           let height = img.height;
 
@@ -57,7 +106,6 @@ function Perfil() {
           ctx.drawImage(img, 0, 0, width, height);
           
           canvas.toBlob((blob) => {
-            // Comprimir mais a imagem (reduzido para 30%)
             resolve(blob);
           }, 'image/jpeg', 0.3);
         };
@@ -114,55 +162,61 @@ function Perfil() {
   const handleEditSubmit = async () => {
     try {
       const formData = new FormData();
-      // Apenas os campos que o backend aceita
       formData.append('nome', editForm.nome || '');
       formData.append('email', editForm.email || '');
       formData.append('nivelAcesso', userInfo.nivelAcesso || 'USER');
       formData.append('bio', editForm.bio || '');
 
-      // Adicionar arquivo se houver
-      const file = fileInputRef.current?.files[0];
       const compressedFile = compressedFileRef.current;
       if (compressedFile) {
-        try {
-          console.log('Enviando arquivo comprimido:', compressedFile.name, compressedFile.type, compressedFile.size);
-          formData.append('file', compressedFile);
-        } catch (error) {
-          console.error('Erro ao anexar arquivo:', error);
-          alert('Erro ao processar a imagem. Tente novamente.');
-          return;
-        }
-      } else if (file) {
-        // fallback: enviar o arquivo original
-        formData.append('file', file);
+        formData.append('file', compressedFile);
       }
 
-      // Atualizar dados do usuário
       await UsuarioService.editar(userInfo.id, formData);
 
-      // Buscar os dados atualizados normalizados e atualizar o estado/localStorage
       const updatedUserData = await UsuarioService.getCurrentUserFull();
       if (updatedUserData) {
-        // Atualizar localStorage com a versão bruta (para compatibilidade com outras partes)
         const storageData = { ...updatedUserData };
         if (storageData.foto && storageData.foto instanceof Uint8Array) {
           storageData.foto = Array.from(storageData.foto);
         }
-        // garantir que fotoPerfil esteja presente no localStorage (data URL)
         if (updatedUserData.fotoPerfil) {
           storageData.fotoPerfil = updatedUserData.fotoPerfil;
         }
         localStorage.setItem('user', JSON.stringify(storageData));
 
         setUserInfo(updatedUserData);
-        // Recarregar postagens do usuário (caso a foto/metadata influencie)
         await fetchUserPosts(updatedUserData.id);
       }
       setIsEditing(false);
       setPreviewImage(null);
+      alert('✅ Perfil atualizado com sucesso!');
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err);
       alert('Erro ao atualizar perfil. Tente novamente.');
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta publicação?')) {
+      return;
+    }
+
+    try {
+      await PostagemService.delete(postId);
+      alert('✅ Publicação excluída com sucesso!');
+      
+      // Atualizar lista de posts removendo o deletado
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      
+      // Atualizar contador de posts
+      setStats(prev => ({
+        ...prev,
+        posts: Math.max(0, prev.posts - 1)
+      }));
+    } catch (error) {
+      console.error('Erro ao excluir publicação:', error);
+      alert('❌ Erro ao excluir publicação. Tente novamente.');
     }
   };
 
@@ -177,11 +231,8 @@ function Perfil() {
         return;
       }
 
-      console.log('Dados do usuário carregados (normalizados):', userData);
-
       setUserInfo(userData);
 
-      // Atualizar stats com os dados do usuário
       setStats({
         posts: userData.postsCount || 0,
         followers: userData.followersCount || 0,
@@ -189,7 +240,6 @@ function Perfil() {
         likes: userData.likesCount || 0
       });
 
-      // Buscar postagens do usuário
       await fetchUserPosts(userData.id);
       
     } catch (error) {
@@ -204,10 +254,7 @@ function Perfil() {
     try {
       const allResp = await PostagemService.findAll();
       const all = allResp.data || [];
-      console.log('Total posts from API:', all.length);
       const userPosts = all.filter(p => p.usuario && (p.usuario.id == userId));
-      console.log('Posts belonging to userId', userId, ':', userPosts.length);
-      // mapear para o formato usado na UI
       const mapped = userPosts.map(p => ({
         id: p.id,
         title: p.legenda || p.descricao || 'Sem título',
@@ -217,16 +264,30 @@ function Perfil() {
         type: p.categoria?.nome?.toLowerCase() || 'art'
       }));
       setPosts(mapped);
+      
+      setStats(prev => ({
+        ...prev,
+        posts: mapped.length
+      }));
     } catch (err) {
       console.error('Erro ao buscar postagens do usuário:', err);
       setPosts([]);
     }
   };
 
-  // Efeito para carregar dados iniciais
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  const getProfileImage = () => {
+    if (previewImage) return previewImage;
+    
+    const photoURL = convertPhotoToDataURL(userInfo?.foto);
+    if (photoURL) return photoURL;
+    
+    return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='100%25' height='100%25' fill='%23222'/%3E%3Ctext x='50%25' y='50%25' fill='%23999' font-size='48' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3E👤%3C/text%3E%3C/svg%3E";
+  };
+
   if (loading) {
     return <div className="home-layout"><Sidebar /><main className="main-content"><div className="profile-container"><p>Carregando perfil...</p></div></main></div>;
   }
@@ -249,42 +310,9 @@ function Perfil() {
                 <label>Foto de Perfil</label>
                 <div className="avatar-edit">
                   <img 
-                    src={(() => {
-                      if (previewImage) {
-                          return previewImage;
-                        }
-                        if (userInfo.fotoPerfilBlob) {
-                          return userInfo.fotoPerfilBlob;
-                        }
-                        if (userInfo.fotoPerfil) {
-                          return userInfo.fotoPerfil;
-                        }
-                      if (userInfo.foto) {
-                        try {
-                          let fotoBytes;
-                          if (typeof userInfo.foto === 'string' && userInfo.foto.startsWith('data:image')) {
-                            return userInfo.foto;
-                          } else if (Array.isArray(userInfo.foto)) {
-                            fotoBytes = new Uint8Array(userInfo.foto);
-                          } else if (userInfo.foto.data) {
-                            fotoBytes = new Uint8Array(userInfo.foto.data);
-                          }
-                          if (fotoBytes) {
-                            const base64String = btoa(String.fromCharCode.apply(null, fotoBytes));
-                            return `data:image/jpeg;base64,${base64String}`;
-                          }
-                        } catch (error) {
-                          console.error('Erro ao converter foto preview:', error);
-                        }
-                      }
-                      return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23222'/><text x='50%' y='50%' fill='%23999' font-size='12' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Usuário</text></svg>";
-                    })()}
+                    src={getProfileImage()}
                     alt="Preview" 
                     style={{ objectFit: 'cover', width: '120px', height: '120px', borderRadius: '50%' }}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23222'/><text x='50%' y='50%' fill='%23999' font-size='12' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Usuário</text></svg>";
-                    }}
                   />
                   <input
                     type="file"
@@ -393,199 +421,130 @@ function Perfil() {
             </div>
           </div>
         ) : (
-        <div className="profile-container">
-          <div className="profile-header">
-            <div className="profile-cover">
-              <div className="profile-avatar">
-                <img 
-                  src={(() => {
-                    // Primeiro verifica se tem fotoPerfil (que é a URL processada)
-                    if (userInfo.fotoPerfilBlob) {
-                      return userInfo.fotoPerfilBlob;
-                    }
-                    if (userInfo.fotoPerfil) {
-                      return userInfo.fotoPerfil;
-                    }
-                    
-                    // Se não tem foto, retorna a imagem padrão
-                    if (!userInfo.foto) {
-                      return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23222'/><text x='50%' y='50%' fill='%23999' font-size='12' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Usuário</text></svg>";
-                    }
-                    
-                    try {
-                      let fotoBytes;
-                      if (typeof userInfo.foto === 'string') {
-                        // Se a foto já está em base64 ou URL
-                        if (userInfo.foto.startsWith('data:image')) {
-                          return userInfo.foto;
-                        }
-                      } else if (Array.isArray(userInfo.foto)) {
-                        // Se a foto é um array de números
-                        fotoBytes = new Uint8Array(userInfo.foto);
-                      } else if (userInfo.foto.data) {
-                        // Se a foto é um objeto com propriedade data
-                        fotoBytes = new Uint8Array(userInfo.foto.data);
-                      }
-
-                      if (fotoBytes) {
-                        const base64String = btoa(String.fromCharCode.apply(null, fotoBytes));
-                        return `data:image/jpeg;base64,${base64String}`;
-                      }
-
-                      throw new Error('Formato de foto inválido');
-                    } catch (error) {
-                      console.error('Erro ao converter foto:', error, userInfo.foto);
-                      return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23222'/><text x='50%' y='50%' fill='%23999' font-size='12' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Usuário</text></svg>";
-                    }
-                  })()}
-                  alt="Perfil"
-                  style={{ objectFit: 'cover', width: '120px', height: '120px', borderRadius: '50%' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' fill='%23222'/><text x='50%' y='50%' fill='%23999' font-size='12' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Usuário</text></svg>";
-                  }}
-                />
-                <div className="avatar-badge">✓</div>
-              </div>
-            </div>
-            <div className="profile-info">
-              <div className="profile-main">
-                <h1>{userInfo.nome || userInfo.name}</h1>
-                <p className="username">@{userInfo.username || userInfo.email}</p>
-                <p className="bio">{userInfo.bio || ' '}</p>
-                <div className="profile-meta">
-                  <span> Entrou em {userInfo.joinDate || '-'}</span>
+          <div className="profile-container">
+            <div className="profile-header">
+              <div className="profile-cover">
+                <div className="profile-avatar">
+                  <img 
+                    src={getProfileImage()}
+                    alt="Perfil"
+                    style={{ objectFit: 'cover', width: '120px', height: '120px', borderRadius: '50%' }}
+                  />
+                  <div className="avatar-badge">✓</div>
                 </div>
               </div>
-              <div className="profile-actions">
-                <button className="edit-btn" onClick={() => setIsEditing(!isEditing)}>
-                  {isEditing ? '💾 Salvar' : '✏️ Editar Perfil'}
-                </button>
-                <button className="share-btn">🔗 Compartilhar</button>
+              <div className="profile-info">
+                <div className="profile-main">
+                  <h1>{userInfo.nome || userInfo.name}</h1>
+                  <p className="username">@{userInfo.username || userInfo.email}</p>
+                  <p className="bio">{userInfo.bio || 'Olá gente'}</p>
+                  <div className="profile-meta">
+                    <span>📅 Entrou em {userInfo.joinDate || new Date().toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="profile-actions">
+                  <button className="edit-btn" onClick={() => setIsEditing(true)}>
+                    ✏️ Editar Perfil
+                  </button>
+                  <button className="share-btn">🔗 Compartilhar</button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="profile-stats">
-            <div className="stat">
-              <h3>{stats.posts}</h3>
-              <span>Publicações</span>
+            <div className="profile-stats">
+              <div className="stat">
+                <h3>{stats.posts}</h3>
+                <span>Publicações</span>
+              </div>
+              <div className="stat">
+                <h3>{stats.followers.toLocaleString()}</h3>
+                <span>Seguidores</span>
+              </div>
+              <div className="stat">
+                <h3>{stats.following}</h3>
+                <span>Seguindo</span>
+              </div>
+              <div className="stat">
+                <h3>{stats.likes.toLocaleString()}</h3>
+                <span>Curtidas</span>
+              </div>
             </div>
-            <div className="stat">
-              <h3>{stats.followers.toLocaleString()}</h3>
-              <span>Seguidores</span>
-            </div>
-            <div className="stat">
-              <h3>{stats.following}</h3>
-              <span>Seguindo</span>
-            </div>
-            <div className="stat">
-              <h3>{stats.likes.toLocaleString()}</h3>
-              <span>Curtidas</span>
-            </div>
-          </div>
 
-          <div className="profile-tabs">
-            <button 
-              className={`tab ${activeTab === 'posts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('posts')}
-            >
-              📝 Publicações
-            </button>
-            <button 
-              className={`tab ${activeTab === 'achievements' ? 'active' : ''}`}
-              onClick={() => setActiveTab('achievements')}
-            >
-              🏆 Conquistas
-            </button>
-            <button 
-              className={`tab ${activeTab === 'about' ? 'active' : ''}`}
-              onClick={() => setActiveTab('about')}
-            >
-              ℹ️ Sobre
-            </button>
-          </div>
+            <div className="profile-tabs">
+              <button 
+                className={`tab ${activeTab === 'posts' ? 'active' : ''}`}
+                onClick={() => setActiveTab('posts')}
+              >
+                📝 Publicações
+              </button>
+              <button 
+                className={`tab ${activeTab === 'achievements' ? 'active' : ''}`}
+                onClick={() => setActiveTab('achievements')}
+              >
+                🏆 Conquistas
+              </button>
+              <button 
+                className={`tab ${activeTab === 'about' ? 'active' : ''}`}
+                onClick={() => setActiveTab('about')}
+              >
+                ℹ️ Sobre
+              </button>
+            </div>
 
-          <div className="profile-content">
-            {activeTab === 'posts' && (
-              <div className="content-grid">
-                {posts.length === 0 ? (
-                  <p>Nenhuma publicação encontrada.</p>
-                ) : (
-                  posts.map(post => (
-                    <div key={post.id} className="content-item">
-                      <div className="content-image">
-                        <img src={post.image} alt={post.title} />
-                        <div className="content-overlay">
-                          <div className="content-stats">
-                            <span>❤️ {post.likes}</span>
-                            <span>💬 {post.comments}</span>
+            <div className="profile-content">
+              {activeTab === 'posts' && (
+                <div className="content-grid">
+                  {posts.length === 0 ? (
+                    <p>Nenhuma publicação encontrada.</p>
+                  ) : (
+                    posts.map(post => (
+                      <div key={post.id} className="content-item">
+                        <div className="content-image" onClick={() => navigate(`/postagem/${post.id}`)}>
+                          <img src={post.image} alt={post.title} />
+                          <div className="content-overlay">
+                            <div className="content-stats">
+                              <span>❤️ {post.likes}</span>
+                              <span>💬 {post.comments}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="content-info">
-                        <div className="content-type">
-                          {post.type === 'music' && '🎵'}
-                          {post.type === 'art' && '🎨'}
-                          {post.type === 'photo' && '📸'}
+                        <div className="content-info">
+                          <h4>{post.title}</h4>
+                          <button 
+                            className="delete-post-btn"
+                            onClick={() => handleDeletePost(post.id)}
+                            title="Excluir publicação"
+                          >
+                            🗑️ Excluir
+                          </button>
                         </div>
-                        <h4>{post.title}</h4>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'achievements' && (
+                <div className="achievements-grid">
+                  <p>🏆 Conquistas em breve!</p>
+                </div>
+              )}
+
+              {activeTab === 'about' && (
+                <div className="about-section">
+                  <div className="about-card">
+                    <h3>📊 Estatísticas</h3>
+                    <div className="stats-detailed">
+                      <div className="stat-item">
+                        <span className="stat-label">Total de visualizações</span>
+                        <span className="stat-value">Em breve</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeTab === 'achievements' && (
-              <div className="achievements-grid">
-                {achievements.length === 0 ? (
-                  <p>Nenhuma conquista encontrada.</p>
-                ) : (
-                  achievements.map((achievement, index) => (
-                    <div key={index} className="achievement-item">
-                      <div className="achievement-icon">{achievement.icon}</div>
-                      <h4>{achievement.title}</h4>
-                      <p>{achievement.description}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeTab === 'about' && (
-              <div className="about-section">
-                <div className="about-card">
-                  <h3>📊 Estatísticas</h3>
-                  <div className="stats-detailed">
-                    <div className="stat-item">
-                      <span className="stat-label">Total de visualizações</span>
-                      <span className="stat-value">25.4K</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Média de curtidas</span>
-                      <span className="stat-value">139</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Engajamento</span>
-                      <span className="stat-value">8.2%</span>
-                    </div>
                   </div>
                 </div>
-                <div className="about-card">
-                  <h3>🎯 Interesses</h3>
-                  <div className="interests-tags">
-                    <span className="tag">Música Eletrônica</span>
-                    <span className="tag">Arte Digital</span>
-                    <span className="tag">Fotografia</span>
-                    <span className="tag">Design</span>
-                    <span className="tag">Tecnologia</span>
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
         )}
       </main>
     </div>

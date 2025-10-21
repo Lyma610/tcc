@@ -87,7 +87,7 @@ const signup = (nome, email, senha) => {
         senha,
         nivelAcesso: 'USER'
     };
-    return http.mainInstance.post(API_URL + "create", usuario);
+    return http.mainInstance.post(API_URL + "save", usuario);
 };
 
 const signin = async (email, senha) => {

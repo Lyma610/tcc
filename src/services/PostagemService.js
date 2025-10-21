@@ -55,12 +55,8 @@ const create = (file, data, usuario) => {
     formData.append('usuario.id', usuario.id);
   }
 
-  // Opcional: status e data podem ser setados no backend; se quiser, envie também
-  // formData.append('statusPostagem', 'ATIVO');
-
   return http.multipartInstance.post(API_URL + "create", formData);
 };
-
 
 const alterar = (file, id, data) => {
   const formData = new FormData();
@@ -70,20 +66,14 @@ const alterar = (file, id, data) => {
   formData.append('descricao', data.descricao);
   formData.append('preco', data.preco);
 
-  if (data.categoria.id === undefined) { // SE O USUÁRIO ALTEROU A "Categoria"
+  if (data.categoria.id === undefined) {
     formData.append('categoria', data.categoria.toString());
-  } else { // SE O USUÁRIO NÃO ALTEROU A "Categoria"
+  } else {
     formData.append('categoria', data.categoria.id);
   }
 
-  /*
-    for (const key of formData.entries()) {
-      console.log(key[0] + ', ' + key[1]);
-    } 
-  */
   return http.multipartInstance.put(API_URL + `alterar/${id}`, formData);
 };
-
 
 const inativar = (id) => {
   return http.multipartInstance.put(API_URL + `inativar/${id}`);
@@ -108,6 +98,11 @@ const findGenerosByCategoria = (categoriaId) => {
   return http.mainInstance.get(API_URL + `findGenerosByCategoria/${categoriaId}`);
 };
 
+// NOVO MÉTODO DELETE
+const deletePost = (id) => {
+  return http.mainInstance.delete(API_URL + `delete/${id}`);
+};
+
 const PostagemService = {
   findAll,
   findById,
@@ -121,7 +116,8 @@ const PostagemService = {
   reativar,
   addCardapio,
   findByCategoriaAndGenero,
-  findGenerosByCategoria
+  findGenerosByCategoria,
+  delete: deletePost  // Adicionado aqui
 };
 
 export default PostagemService;

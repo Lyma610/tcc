@@ -16,10 +16,10 @@ function PostagemNova() {
         legenda: '',
         descricao: '',
         categoria: null,
-        genero: null
+        genero: null,
+        file: null
     });
 
-    const [file, setFile] = useState("");
     const [dragActive, setDragActive] = useState(false);
     const [preview, setPreview] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -41,28 +41,59 @@ function PostagemNova() {
 
     const getGeneros = async (categoriaId = null) => {
         try {
-            let response;
-            if (categoriaId) {
-                response = await PostagemService.findGenerosByCategoria(categoriaId);
-            } else {
-                response = await PostagemService.findGeneros();
+            console.log('Buscando gêneros para categoria:', categoriaId);
+            
+            if (categoriaId === 6) {
+                // Se for categoria 6, buscar gêneros das categorias 4 e 5
+                const [response4, response5] = await Promise.all([
+                    PostagemService.findGenerosByCategoria(4),
+                    PostagemService.findGenerosByCategoria(5)
+                ]);
+                
+                // Combinar os gêneros das duas categorias
+                const generosComibinados = [
+                    ...(response4.data || []),
+                    ...(response5.data || [])
+                ];
+                
+                console.log('Gêneros combinados (cat 4 e 5):', generosComibinados);
+                setGeneros(generosComibinados);
+                return;
             }
-            console.log('Gêneros recebidos:', response.data);
-            setGeneros(response.data || []);
+            
+            if (categoriaId) {
+                // Para outras categorias, buscar normalmente
+                const response = await PostagemService.findGenerosByCategoria(categoriaId);
+                console.log('Gêneros recebidos para categoria', categoriaId, ':', response.data);
+                setGeneros(response.data || []);
+            } else {
+                // Sem categoria: limpar gêneros
+                setGeneros([]);
+            }
         } catch (error) {
             console.error('Erro ao buscar gêneros:', error);
             setGeneros([]);
         }
     }
+
+    // useEffect para carregar categorias
     useEffect(() => {
         if (_dbRecords.current) {
             getCategorias();
-            getGeneros();
         }
         return () => {
             _dbRecords.current = false;
         }
     }, []);
+
+    // useEffect para carregar gêneros quando categoria muda
+    useEffect(() => {
+        if (formData.categoria) {
+            getGeneros(formData.categoria);
+        } else {
+            setGeneros([]);
+        }
+    }, [formData.categoria]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -127,10 +158,29 @@ function PostagemNova() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Validações
+        if (!formData.file) {
+            alert('Por favor, selecione um arquivo');
+            return;
+        }
+        if (!formData.categoria) {
+            alert('Por favor, selecione uma categoria');
+            return;
+        }
+        if (generos.length > 0 && !formData.genero) {
+            alert('Por favor, selecione um gênero');
+            return;
+        }
+        if (!formData.legenda) {
+            alert('Por favor, adicione um título');
+            return;
+        }
+
         setIsUploading(true);
 
         // Create post with all required data
-        PostagemService.create(file, formData, usuario)
+        PostagemService.create(formData.file, formData, usuario)
             .then((response) => {
                 setIsUploading(false);
                 alert('🎉 Conteúdo publicado com sucesso!');
@@ -141,7 +191,8 @@ function PostagemNova() {
                     legenda: '',
                     descricao: '',
                     categoria: null,
-                    genero: null
+                    genero: null,
+                    file: null
                 });
             })
             .catch((error) => {
@@ -262,12 +313,10 @@ function PostagemNova() {
                                                 className={`category-card ${formData.categoria === cat.id ? 'selected' : ''}`}
                                                 onClick={() => {
                                                     setFormData(prev => ({ ...prev, categoria: cat.id, genero: null }));
-                                                    getGeneros(cat.id);
                                                 }}
                                             >
                                                 <div className="category-icon">
                                                     <img src={`/assets/icons/${cat.icone}.png`} alt="" />
-
                                                 </div>
                                                 <h5>{cat.nome}</h5>
                                                 <p>{cat.descricao}</p>
@@ -283,22 +332,29 @@ function PostagemNova() {
                             <div className="step-content">
                                 <h3>📝 Informações do Conteúdo</h3>
 
-                                <div className="category-selection">
-                                    <h4>🎯 Selecione o Gênero</h4>
-                                    <div className="categories-grid">
-                                        {generos.map(genero => (
-                                            <div key={genero.id}
-                                                className={`category-card ${formData.genero === genero.id ? 'selected' : ''}`}
-                                                onClick={() => setFormData(prev => ({ ...prev, genero: genero.id }))}
-                                            >
-                                                <h5>{genero.nome}</h5>
-                                            </div>
-                                        ))}
+                                {generos.length > 0 ? (
+                                    <div className="category-selection">
+                                        <h4>🎯 Selecione o Gênero</h4>
+                                        <div className="categories-grid">
+                                            {generos.map(genero => (
+                                                <div key={genero.id}
+                                                    className={`category-card ${formData.genero === genero.id ? 'selected' : ''}`}
+                                                    onClick={() => setFormData(prev => ({ ...prev, genero: genero.id }))}
+                                                >
+                                                    <h5>{genero.nome}</h5>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="no-genres-message">
+                                        <p>⚠️ Nenhum gênero disponível para esta categoria</p>
+                                    </div>
+                                )}
+
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label htmlFor="legenda">📌 Títulos *</label>
+                                        <label htmlFor="legenda">📌 Título *</label>
                                         <input
                                             type="text"
                                             id="legenda"

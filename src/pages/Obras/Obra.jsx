@@ -21,13 +21,16 @@ function Obra() {
       try {
         setLoading(true);
         // Busca categorias 4 (Comunidade) e 5 (Obras Literárias)
-        const [resp4, resp5] = await Promise.all([
+        const [resp4, resp5, resp6] = await Promise.all([
           PostagemService.findByCategoria(4),
-          PostagemService.findByCategoria(5)
+          PostagemService.findByCategoria(5),
+          PostagemService.findByCategoria(6)
         ]);
         const posts4 = resp4.data || [];
         const posts5 = resp5.data || [];
-        const postagens = [...posts4, ...posts5];
+        const posts6 = resp6.data || [];
+
+        const postagens = [...posts4, ...posts5, ...posts6];
 
         const agrupado = postagens.reduce((acc, post) => {
           const generoNome = post.genero?.nome || 'Sem Gênero';
@@ -48,7 +51,7 @@ function Obra() {
     fetchData();
   }, []);
 
-  if (showSplash) return <Splash duration={800} onFinish={() => setShowSplash(false)} />;
+  if (showSplash) return <Splash duration={1000} onFinish={() => setShowSplash(false)} />;
   if (loading) return <div style={{padding: 24, color: '#fff'}}>Carregando...</div>;
   if (error) return <div style={{padding: 24, color: '#ff7777'}}>{error}</div>;
 

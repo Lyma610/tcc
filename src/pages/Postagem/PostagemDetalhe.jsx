@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar/Sidebar';
@@ -14,13 +13,63 @@ function PostagemDetalhe() {
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
 
+  // Função para normalizar usuário (converter byte[] em base64)
+  const normalizeUser = (user) => {
+    if (!user) return user;
+    try {
+      // Se já tiver foto como dataURL
+      if (user.foto && typeof user.foto === 'string' && user.foto.startsWith('data:image')) {
+        user.fotoPerfil = user.foto;
+        return user;
+      }
+
+      // Caso foto venha como objeto { data: [...] } ou array de bytes
+      const fotoArray = user.foto && (user.foto.data || user.foto);
+      if (fotoArray && Array.isArray(fotoArray) && fotoArray.length > 0) {
+        const bytes = new Uint8Array(fotoArray);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64String = btoa(binary);
+        user.fotoPerfil = `data:image/jpeg;base64,${base64String}`;
+      } else if (user.foto && typeof user.foto === 'string') {
+        // pode ser que backend retorne apenas a string base64 sem prefixo
+        const possibleBase64 = user.foto;
+        const isBase64 = /^[A-Za-z0-9+/=\r\n]+$/.test(possibleBase64.replace(/\s+/g, ''));
+        if (isBase64) {
+          const dataUrl = `data:image/jpeg;base64,${possibleBase64.replace(/\s+/g, '')}`;
+          user.fotoPerfil = dataUrl;
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao normalizar usuário:', err);
+    }
+    return user;
+  };
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
         setLoading(true);
         const response = await PostagemService.findById(id);
-        setPost(response.data);
+        const postData = response.data;
+        
+        console.log('Post carregado:', postData);
+        console.log('Usuario:', postData.usuario);
+        console.log('Foto do usuario:', postData.usuario?.foto);
+        
+        // Normalizar a foto do usuário da postagem
+        if (postData.usuario) {
+          postData.usuario = normalizeUser(postData.usuario);
+          console.log('Usuario normalizado:', postData.usuario);
+          console.log('FotoPerfil gerada:', postData.usuario.fotoPerfil);
+        }
+        
+        setPost(postData);
+        
       } catch (err) {
+        console.error('Erro ao carregar postagem:', err);
         setError('Erro ao carregar postagem.');
       } finally {
         setLoading(false);
@@ -32,6 +81,8 @@ function PostagemDetalhe() {
   if (loading) return <div style={{padding: 24, color: '#fff'}}>Carregando...</div>;
   if (error) return <div style={{padding: 24, color: '#ff7777'}}>{error}</div>;
   if (!post) return <div style={{padding: 24, color: '#fff'}}>Postagem não encontrada.</div>;
+
+  const avatarUrl = post.usuario?.fotoPerfil;
 
   return (
     <div className="layout">
@@ -49,15 +100,24 @@ function PostagemDetalhe() {
           <div className="insta-info-area">
             <div className="insta-user-row">
               <div className="insta-avatar">
-                {post.usuario?.fotoPerfil || post.usuario?.foto ? (
-                  <img src={post.usuario?.fotoPerfil || post.usuario?.foto} alt={post.usuario?.nome || 'Usuário'} />
+                {avatarUrl ? (
+                  <img 
+                    src={avatarUrl} 
+                    alt={post.usuario?.nome || 'Usuário'}
+                    onError={(e) => {
+                      console.error('Erro ao carregar imagem de perfil');
+                      e.target.onerror = null;
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerHTML = '<div class="avatar-placeholder"><i class="bi bi-person-fill"></i></div>';
+                    }}
+                  />
                 ) : (
                   <div className="avatar-placeholder"><i className="bi bi-person-fill"></i></div>
                 )}
               </div>
               <div className="insta-user-meta">
                 <span className="insta-username">{post.usuario?.nome || 'Usuário'}</span>
-                <span className="insta-user-handle">@{post.usuario?.username || 'usuario'}</span>
+                <span className="insta-user-handle">@{post.usuario?.email?.split('@')[0] || 'usuario'}</span>
               </div>
               <button className="insta-follow-btn">Seguir</button>
             </div>

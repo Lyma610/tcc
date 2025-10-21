@@ -11,7 +11,6 @@ import Perfil from './pages/Perfil/Perfil';
 import Publicar from './pages/Publicar/Publicar';
 import Explorar from './pages/Explorar/Explorar';
 import Configuracoes from './pages/Configuracoes/Configuracoes';
-import Notificacoes from './pages/Notificacoes/Notificacoes';
 import Obras from './pages/Obras/Obra';
 import PostagemDetalhe from './pages/Postagem/PostagemDetalhe';
 
@@ -21,7 +20,6 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/obras" element={<Obras />} />
         <Route path="/postagem/:id" element={<PostagemDetalhe />} />
-        <Route path="/notificacoes" element={<Notificacoes />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/explorar" element={<Explorar />} />
         <Route path="/publicar" element={<Publicar />} />
