@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import http from '../../common/http-common';
 import PostagemService from '../../services/PostagemService';
+import UsuarioService from '../../services/UsuarioService';
+import LoginPrompt from '../../components/LoginPrompt/LoginPrompt';
 import './PostagemDetalhe.css';
 
 function PostagemDetalhe() {
@@ -12,6 +14,52 @@ function PostagemDetalhe() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  
+  // Verificar se é visitante
+  const currentUser = UsuarioService.getCurrentUser();
+  const isVisitor = currentUser?.nivelAcesso === 'VISITANTE' || 
+                   currentUser?.isVisitor === true ||
+                   currentUser?.status === 'TerminarRegistro' ||
+                   currentUser?.statusUsuario === 'TerminarRegistro' ||
+                   !currentUser;
+
+  // Funções para lidar com interações de visitantes
+  const handleVisitorInteraction = (action) => {
+    if (isVisitor) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    // Se não for visitante, executar a ação normalmente
+    action();
+  };
+
+  const handleLike = () => {
+    handleVisitorInteraction(() => {
+      setLiked(l => !l);
+    });
+  };
+
+  const handleComment = () => {
+    handleVisitorInteraction(() => {
+      // Lógica de comentário aqui
+      console.log('Comentando...');
+    });
+  };
+
+  const handleShare = () => {
+    handleVisitorInteraction(() => {
+      // Lógica de compartilhamento aqui
+      console.log('Compartilhando...');
+    });
+  };
+
+  const handleFollow = () => {
+    handleVisitorInteraction(() => {
+      // Lógica de seguir aqui
+      console.log('Seguindo...');
+    });
+  };
 
   // Função para normalizar usuário (converter byte[] em base64)
   const normalizeUser = (user) => {
@@ -119,18 +167,18 @@ function PostagemDetalhe() {
                 <span className="insta-username">{post.usuario?.nome || 'Usuário'}</span>
                 <span className="insta-user-handle">@{post.usuario?.email?.split('@')[0] || 'usuario'}</span>
               </div>
-              <button className="insta-follow-btn">Seguir</button>
+              <button className="insta-follow-btn" onClick={handleFollow}>Seguir</button>
             </div>
             <div className="insta-post-content">
               <span className="insta-legenda">{post.legenda || ''}</span>
               {post.descricao && <p className="insta-descricao">{post.descricao}</p>}
             </div>
             <div className="insta-actions-row">
-              <button className={`insta-action-btn${liked ? ' liked' : ''}`} onClick={() => setLiked(l => !l)}>
+              <button className={`insta-action-btn${liked ? ' liked' : ''}`} onClick={handleLike}>
                 <i className={`bi ${liked ? 'bi-heart-fill' : 'bi-heart'}`}></i>
               </button>
-              <button className="insta-action-btn"><i className="bi bi-chat"></i></button>
-              <button className="insta-action-btn"><i className="bi bi-share"></i></button>
+              <button className="insta-action-btn" onClick={handleComment}><i className="bi bi-chat"></i></button>
+              <button className="insta-action-btn" onClick={handleShare}><i className="bi bi-share"></i></button>
             </div>
             <div className="insta-meta-row">
               <span className="insta-meta">{post.categoria?.nome || ''} • {post.genero?.nome || ''}</span>
@@ -142,6 +190,25 @@ function PostagemDetalhe() {
           </div>
         </div>
       </main>
+      
+      {/* Modal de Login Prompt */}
+      {showLoginPrompt && (
+        <div className="modal-overlay" onClick={() => setShowLoginPrompt(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <LoginPrompt 
+              title="Login Necessário"
+              message="Para interagir com as postagens (curtir, comentar, compartilhar), você precisa fazer login como Artista."
+              showUpgrade={true}
+            />
+            <button 
+              className="modal-close"
+              onClick={() => setShowLoginPrompt(false)}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

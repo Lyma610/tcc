@@ -101,10 +101,9 @@ function Obra() {
         {/* Filtros de Gênero - Design Moderno */}
         <div className="modern-filters" style={{ 
           marginBottom: '32px', 
-          padding: '0 24px',
+          padding: '24px',
           background: 'linear-gradient(135deg, rgba(0, 255, 102, 0.1) 0%, rgba(0, 191, 255, 0.1) 100%)',
           borderRadius: '20px',
-          padding: '24px',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
@@ -143,7 +142,6 @@ function Obra() {
                   ? '0 8px 25px rgba(0, 255, 102, 0.4)' 
                   : '0 4px 15px rgba(0, 0, 0, 0.1)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
                 minWidth: '80px'
               }}
               onMouseEnter={(e) => {
@@ -186,7 +184,6 @@ function Obra() {
                     ? '0 8px 25px rgba(0, 255, 102, 0.4)' 
                     : '0 4px 15px rgba(0, 0, 0, 0.1)',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   minWidth: '80px'
                 }}
                 onMouseEnter={(e) => {

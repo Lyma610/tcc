@@ -10,6 +10,23 @@ import GeneroService from '../../services/GeneroService';
 function Publicar() {
     const _dbRecords = useRef(true);
     const usuario = UsuarioService.getCurrentUser();
+    
+    // Debug: verificar dados do usuário
+    console.log('Dados do usuário atual:', usuario);
+    console.log('nivelAcesso:', usuario?.nivelAcesso);
+    
+    // Verificar se o usuário é visitante baseado no nivelAcesso
+    const isVisitor = usuario?.nivelAcesso === 'VISITANTE' || 
+                     usuario?.nivelAcesso === null ||
+                     usuario?.nivelAcesso === undefined ||
+                     usuario?.nivelAcesso === 'NULL' ||
+                     usuario?.nivelAcesso === 'USER' || // USER também é tratado como visitante por compatibilidade
+                     usuario?.status === 'TerminarRegistro' ||
+                     usuario?.statusUsuario === 'TerminarRegistro' ||
+                     usuario?.isVisitor === true;
+    
+    console.log('isVisitor:', isVisitor);
+    console.log('nivelAcesso do usuário:', usuario?.nivelAcesso);
 
     const [activeStep, setActiveStep] = useState(1);
     const [formData, setFormData] = useState({ legenda: '', descricao: '', categoria: null, genero: null, file: null });
@@ -73,6 +90,39 @@ function Publicar() {
 
     const nextStep = () => { if (activeStep < 3) setActiveStep(activeStep + 1); };
     const prevStep = () => { if (activeStep > 1) setActiveStep(activeStep - 1); };
+
+    // Se for visitante, mostrar tela de bloqueio
+    if (isVisitor) {
+        return (
+            <div className="home-layout">
+                <Sidebar />
+                <main className="main-content">
+                    <div className="visitor-block-container">
+                        <div className="visitor-block-content">
+                            <div className="visitor-icon">🚫</div>
+                            <h1>Área Restrita</h1>
+                            <p>Visitantes não podem criar publicações.</p>
+                            <p>Para postar conteúdo, você precisa ser um <strong>Artista</strong>.</p>
+                            <div className="visitor-actions">
+                                <button 
+                                    className="btn-upgrade"
+                                    onClick={() => window.location.href = '/perfil'}
+                                >
+                                    🎨 Tornar-se Artista
+                                </button>
+                                <button 
+                                    className="btn-explore"
+                                    onClick={() => window.location.href = '/home'}
+                                >
+                                    🏠 Explorar Conteúdo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="home-layout">

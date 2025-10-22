@@ -1,0 +1,309 @@
+.complete-registration-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(85, 6, 105, 0.1) 0%, rgba(128, 146, 206, 0.1) 100%);
+  border-radius: 20px;
+  margin: 20px;
+}
+
+.complete-registration-content {
+  max-width: 600px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.complete-registration-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.complete-registration-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.complete-registration-header h1 {
+  color: #550669;
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.complete-registration-header p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.complete-registration-form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  color: #333 !important; /* Forçar cor do texto */
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #666 !important; /* Cor do placeholder */
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #550669;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(85, 6, 105, 0.1);
+  color: #333 !important; /* Manter cor do texto no foco */
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.btn-complete, .btn-cancel {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-complete {
+  background: linear-gradient(135deg, #550669 0%, #8092ce 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(85, 6, 105, 0.3);
+}
+
+.btn-complete:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(85, 6, 105, 0.4);
+}
+
+.btn-complete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #00ff66 0%, #00bfff 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 255, 102, 0.3);
+}
+
+.btn-cancel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 102, 0.4);
+}
+
+.complete-registration-benefits {
+  background: linear-gradient(135deg, #f8f9ff, #e8f0ff);
+  border: 2px solid #e0e7ff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+}
+
+.complete-registration-benefits h3 {
+  color: #550669;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.complete-registration-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.complete-registration-benefits li {
+  font-size: 1rem;
+  color: #4b5563;
+  margin: 10px 0;
+  padding-left: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-error {
+  background: linear-gradient(135deg, #fee, #fecaca);
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 15px 0;
+  border: 1px solid #fca5a5;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.form-success {
+  background: linear-gradient(135deg, #f0fff4, #dcfce7);
+  color: #16a34a;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin: 15px 0;
+  border: 1px solid #86efac;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .complete-registration-container {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .complete-registration-content {
+    padding: 30px 20px;
+  }
+  
+  .complete-registration-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .form-actions {
+    gap: 12px;
+  }
+  
+  .btn-complete, .btn-cancel {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .complete-registration-content {
+    padding: 20px 15px;
+  }
+  
+  .complete-registration-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Loading styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #550669;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* User info styles */
+.user-info {
+  background: rgba(85, 6, 105, 0.1);
+  border: 1px solid rgba(85, 6, 105, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.user-info p {
+  margin: 0;
+  color: #550669;
+  font-size: 0.95rem;
+}
+
+.user-info strong {
+  color: #550669;
+}

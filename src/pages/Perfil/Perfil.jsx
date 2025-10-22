@@ -4,6 +4,7 @@ import UsuarioService from '../../services/UsuarioService';
 import http from '../../common/http-common';
 import PostagemService from '../../services/PostagemService';
 import Sidebar from '../../components/Sidebar/Sidebar';
+import LoginPrompt from '../../components/LoginPrompt/LoginPrompt';
 import './Perfil.css';
 import './EditProfile.css';
 
@@ -16,11 +17,18 @@ function Perfil() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Verificar se é visitante
+  const currentUser = UsuarioService.getCurrentUser();
+  const isVisitor = currentUser?.nivelAcesso === 'VISITANTE' || 
+                   currentUser?.isVisitor === true ||
+                   currentUser?.status === 'TerminarRegistro' ||
+                   currentUser?.statusUsuario === 'TerminarRegistro' ||
+                   !currentUser;
   const [editForm, setEditForm] = useState({
     nome: '',
     email: '',
-    bio: '',
-    nivelAcesso: 'USER'
+    bio: ''
   });
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -68,8 +76,7 @@ function Perfil() {
       setEditForm({
         nome: userInfo.nome || '',
         email: userInfo.email || '',
-        bio: userInfo.bio || '',
-        nivelAcesso: userInfo.nivelAcesso || 'USER'
+        bio: userInfo.bio || ''
       });
     }
   }, [isEditing, userInfo]);
@@ -164,7 +171,6 @@ function Perfil() {
       const formData = new FormData();
       formData.append('nome', editForm.nome || '');
       formData.append('email', editForm.email || '');
-      formData.append('nivelAcesso', userInfo.nivelAcesso || 'USER');
       formData.append('bio', editForm.bio || '');
 
       const compressedFile = compressedFileRef.current;
@@ -298,6 +304,53 @@ function Perfil() {
     return null;
   }
 
+  // Se for visitante, mostrar prompt para completar registro
+  if (isVisitor) {
+    return (
+      <div className="home-layout">
+        <Sidebar />
+        <main className="main-content">
+          <div className="visitor-complete-registration">
+            <div className="visitor-complete-content">
+              <div className="visitor-complete-icon">🎨</div>
+              <h2>Complete seu Registro</h2>
+              <p>Para acessar seu perfil completo e todas as funcionalidades, você precisa se registrar como <strong>Artista</strong>.</p>
+              
+              <div className="visitor-complete-benefits">
+                <h3>Como Artista você terá:</h3>
+                <ul>
+                  <li>✅ Perfil completo personalizado</li>
+                  <li>✅ Poder postar suas criações</li>
+                  <li>✅ Interagir com outras obras</li>
+                  <li>✅ Acessar todas as funcionalidades</li>
+                </ul>
+              </div>
+              
+              <div className="visitor-complete-actions">
+                <button 
+                  className="btn-complete-registration"
+                  onClick={() => navigate('/completar-registro')}
+                >
+                  🎨 Completar Registro como Artista
+                </button>
+                <button 
+                  className="btn-continue-visitor"
+                  onClick={() => navigate('/home')}
+                >
+                  👤 Continuar como Visitante
+                </button>
+              </div>
+              
+              <div className="visitor-complete-info">
+                <p><strong>Dica:</strong> Você pode continuar explorando como visitante, mas para postar e acessar o perfil completo, precisará se registrar como Artista.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="home-layout">
       <Sidebar />
@@ -353,6 +406,7 @@ function Perfil() {
                   className="form-input"
                 />
               </div>
+
 
               <button
                 type="button"

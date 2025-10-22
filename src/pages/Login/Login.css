@@ -101,6 +101,18 @@ Link{
     border-radius: 8px;
     width: 100%;
     outline: none;
+    transition: all 0.3s ease;
+}
+
+.container input:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.container input:focus:not(:disabled) {
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(85, 6, 105, 0.2);
 }
 
 .form-container{
@@ -225,4 +237,59 @@ Link{
 
 .container.active .toggle-right{
     transform: translateX(200%);
+}
+
+/* Estilos para seleção de tipo de usuário */
+.user-type-selection {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.user-type-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.user-type-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.user-type-btn {
+    padding: 8px 16px;
+    border: 2px solid #ddd;
+    background: #fff;
+    color: #666;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 100px;
+}
+
+.user-type-btn:hover {
+    border-color: #550669;
+    color: #550669;
+    transform: translateY(-1px);
+}
+
+.user-type-btn.active {
+    background: linear-gradient(135deg, #550669, #8092ce);
+    color: #fff;
+    border-color: #550669;
+    box-shadow: 0 4px 12px rgba(85, 6, 105, 0.3);
+}
+
+.user-type-info {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+    margin-top: 5px;
 }

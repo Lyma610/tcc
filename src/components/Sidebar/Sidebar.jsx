@@ -1,9 +1,22 @@
 import './Sidebar.css';
-import { Link } from 'react-router-dom';
-import { FaCog, FaUser, FaBell } from 'react-icons/fa';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaCog, FaUser, FaBell, FaSignOutAlt } from 'react-icons/fa';
+import UsuarioService from '../../services/UsuarioService';
 import logoImage from '../../assets/images/logo.png';
 
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Confirmar logout
+    if (window.confirm('Tem certeza que deseja sair?')) {
+      // Fazer logout
+      UsuarioService.logout();
+      // Redirecionar para login
+      navigate('/');
+    }
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -22,6 +35,14 @@ function Sidebar() {
       <div className="sidebar-footer">
         <Link to="/configuracoes"><FaCog aria-label="configurações" /></Link>
         <Link to="/perfil"><FaUser aria-label="perfil" /></Link>
+        <button 
+          onClick={handleLogout}
+          className="sidebar-logout-btn"
+          aria-label="sair"
+          title="Sair"
+        >
+          <FaSignOutAlt />
+        </button>
       </div>
     </aside>
   );

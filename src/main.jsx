@@ -13,6 +13,7 @@ import Explorar from './pages/Explorar/Explorar';
 import Configuracoes from './pages/Configuracoes/Configuracoes';
 import Obras from './pages/Obras/Obra';
 import PostagemDetalhe from './pages/Postagem/PostagemDetalhe';
+import CompletarRegistro from './pages/CompletarRegistro/CompletarRegistro';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/obras" element={<Obras />} />
         <Route path="/postagem/:id" element={<PostagemDetalhe />} />
+        <Route path="/completar-registro" element={<CompletarRegistro />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/explorar" element={<Explorar />} />
         <Route path="/publicar" element={<Publicar />} />

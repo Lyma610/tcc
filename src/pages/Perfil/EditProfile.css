@@ -151,3 +151,45 @@
     width: 100%;
   }
 }
+
+/* Estilos para seleção de tipo de usuário */
+.user-type-buttons {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.user-type-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #44475a;
+  background: rgba(68, 71, 90, 0.3);
+  color: #a0a0a0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.user-type-btn:hover {
+  border-color: #00ff66;
+  color: #00ff66;
+  transform: translateY(-1px);
+}
+
+.user-type-btn.active {
+  background: linear-gradient(135deg, #00ff66, #00bfff);
+  color: #000;
+  border-color: #00ff66;
+  box-shadow: 0 4px 12px rgba(0, 255, 102, 0.3);
+}
+
+.user-type-info {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+  margin-top: 5px;
+}

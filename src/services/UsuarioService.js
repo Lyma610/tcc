@@ -80,13 +80,27 @@ const getCurrentUserFull = async () => {
     return normalized;
 };
 
-const signup = (nome, email, senha) => {
+const signup = (nome, email, senha, tipoUsuario = 'VISITANTE') => {
     const usuario = {
         nome,
         email,
         senha,
-        nivelAcesso: 'USER'
+        nivelAcesso: tipoUsuario
     };
+    
+    console.log('=== DADOS DE CADASTRO ===');
+    console.log('Nome:', nome);
+    console.log('Email:', email);
+    console.log('Tipo de usuário:', tipoUsuario);
+    console.log('Objeto enviado:', usuario);
+    console.log('========================');
+    
+    // Usar endpoint específico para visitantes
+    if (tipoUsuario === 'VISITANTE') {
+        return http.mainInstance.post(API_URL + "create-visitor", usuario);
+    }
+    
+    // Endpoint normal para artistas
     return http.mainInstance.post(API_URL + "save", usuario);
 };
 
@@ -128,6 +142,22 @@ const editar = async (id, data) => {
     });
 };
 
+
+// Método para atualizar tipo de usuário de usuários existentes
+const atualizarTipoUsuario = (id, tipoUsuario) => {
+    const usuario = {
+        id: id,
+        tipoUsuario: tipoUsuario,
+        tipo: tipoUsuario,
+        userType: tipoUsuario,
+        perfil: tipoUsuario
+    };
+    
+    console.log('Atualizando tipo de usuário:', usuario);
+    
+    return http.mainInstance.put(API_URL + `editar/${id}`, usuario);
+};
+
 const inativar = (id) => {
     return http.multipartInstance.put(API_URL + `inativar/${id}`);
 };
@@ -157,6 +187,7 @@ const UsuarioService = {
     getCurrentUserFull,
     create,
     editar,
+    atualizarTipoUsuario,
     inativar,
     reativar,
     alterarSenha,
