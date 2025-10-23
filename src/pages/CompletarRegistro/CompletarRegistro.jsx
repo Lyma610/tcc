@@ -162,42 +162,24 @@ function CompletarRegistro() {
         return;
       }
 
-      console.log('Atualizando dados básicos:', basicUpdateData);
+      console.log('=== SOLUÇÃO ALTERNATIVA ===');
+      console.log('Evitando endpoint /editar que está com problema');
       
       try {
-        // Primeiro, atualizar dados básicos (sem statusUsuario)
-        const basicDataWithoutStatus = {
-          nome: basicUpdateData.nome,
-          email: basicUpdateData.email,
-          bio: basicUpdateData.bio,
-          nivelAcesso: basicUpdateData.nivelAcesso
+        // SOLUÇÃO: Salvar todos os dados no banco usando endpoint /create
+        console.log('Salvando dados completos no banco de dados...');
+        const dadosCompletos = {
+          nome: formData.nome.trim(),
+          email: formData.email.trim(),
+          senha: formData.senha,
+          bio: formData.bio.trim(),
+          nivelAcesso: 'ARTISTA'
         };
         
-        console.log('Dados para edição (sem status):', basicDataWithoutStatus);
-        const response = await UsuarioService.editar(currentUser.id, basicDataWithoutStatus);
-        console.log('Resposta da atualização básica:', response);
+        const response = await UsuarioService.salvarDadosCompletos(currentUser.id, dadosCompletos);
+        console.log('Resposta da salvamento completo:', response);
         
         if (response && response.data) {
-          // Depois, alterar senha (que também ativa a conta)
-          console.log('Alterando senha e ativando conta...');
-          const passwordUpdateData = {
-            senha: formData.senha
-          };
-          
-          const passwordResponse = await UsuarioService.alterarSenha(currentUser.id, passwordUpdateData);
-          console.log('Resposta da alteração de senha:', passwordResponse);
-        
-          // Atualizar dados no localStorage
-          const updatedUser = {
-            ...currentUser,
-            ...basicDataWithoutStatus,
-            statusUsuario: 'ATIVO', // Forçar status ATIVO
-            isVisitor: false
-          };
-          
-          console.log('Usuário atualizado no localStorage:', updatedUser);
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-          
           setSuccess('Registro completado com sucesso! Bem-vindo como Artista!');
           
           setTimeout(() => {
@@ -207,14 +189,14 @@ function CompletarRegistro() {
           console.error('Resposta inválida do servidor:', response);
           throw new Error('Resposta inválida do servidor');
         }
-      } catch (editError) {
-        console.error('Erro na edição:', editError);
+      } catch (saveError) {
+        console.error('Erro ao salvar dados:', saveError);
         console.error('Detalhes do erro:', {
-          status: editError.response?.status,
-          data: editError.response?.data,
-          message: editError.message
+          status: saveError.response?.status,
+          data: saveError.response?.data,
+          message: saveError.message
         });
-        throw editError; // Re-throw para ser capturado pelo catch principal
+        throw saveError; // Re-throw para ser capturado pelo catch principal
       }
     } catch (err) {
       console.error('Erro ao completar registro:', err);

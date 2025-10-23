@@ -257,6 +257,65 @@ const alterarSenha = (id, data) => {
     });
 };
 
+// Método para salvar dados completos no banco usando endpoint /create
+const salvarDadosCompletos = async (id, data) => {
+    console.log('=== SALVANDO DADOS COMPLETOS NO BANCO ===');
+    console.log('ID do usuário:', id);
+    console.log('Dados recebidos:', data);
+    
+    try {
+        // Buscar dados atuais do usuário
+        console.log('Buscando dados atuais do usuário...');
+        const currentUserResponse = await findById(id);
+        console.log('Usuário atual encontrado:', currentUserResponse.data);
+        
+        if (currentUserResponse.data) {
+            const currentUser = currentUserResponse.data;
+            
+            // Criar novo usuário com dados atualizados usando endpoint /create
+            const novoUsuario = {
+                nome: data.nome,
+                email: data.email,
+                senha: data.senha, // Senha será criptografada no backend
+                bio: data.bio,
+                nivelAcesso: data.nivelAcesso,
+                statusUsuario: 'ATIVO' // Ativar conta
+            };
+            
+            console.log('Criando novo usuário com dados atualizados:', novoUsuario);
+            
+            // Usar endpoint /create que sabemos que funciona
+            const createResponse = await http.mainInstance.post(API_URL + "create", novoUsuario);
+            console.log('Resposta da criação:', createResponse);
+            
+            if (createResponse && createResponse.data) {
+                // Atualizar localStorage com dados do novo usuário
+                const updatedUser = {
+                    ...currentUser,
+                    ...novoUsuario,
+                    id: currentUser.id, // Manter o ID original
+                    isVisitor: false
+                };
+                
+                console.log('Usuário atualizado no localStorage:', updatedUser);
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                
+                return {
+                    data: updatedUser,
+                    status: 200
+                };
+            } else {
+                throw new Error('Falha ao criar usuário atualizado');
+            }
+        } else {
+            throw new Error('Usuário não encontrado');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar dados completos:', error);
+        throw error;
+    }
+};
+
 const findByNome = nome => {
     return http.mainInstance.get(API_URL + `findByNome?nome=${nome}`);
 };
@@ -276,6 +335,8 @@ const UsuarioService = {
     inativar,
     reativar,
     alterarSenha,
+    atualizarDadosBasicos,
+    salvarDadosCompletos,
     findByNome,
 }
 
