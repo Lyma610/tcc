@@ -257,59 +257,63 @@ const alterarSenha = (id, data) => {
     });
 };
 
-// Método para salvar dados completos no banco
+// Método para salvar dados completos no banco usando endpoint /editar
 const salvarDadosCompletos = async (id, data) => {
     console.log('=== SALVANDO DADOS COMPLETOS NO BANCO ===');
     console.log('ID do usuário:', id);
     console.log('Dados recebidos:', data);
     
     try {
-        // Buscar dados atuais do usuário
-        console.log('Buscando dados atuais do usuário...');
-        const currentUserResponse = await findById(id);
-        console.log('Usuário atual encontrado:', currentUserResponse.data);
+        // Usar endpoint /editar original com FormData
+        const formData = new FormData();
         
-        if (currentUserResponse.data) {
-            const currentUser = currentUserResponse.data;
-            
-            // SOLUÇÃO: Usar endpoint /create para criar novo usuário com dados atualizados
-            // Isso vai sobrescrever o usuário atual com os novos dados
-            const novoUsuario = {
+        // Adicionar todos os campos como strings
+        if (data.nome) formData.append('nome', data.nome);
+        if (data.email) formData.append('email', data.email);
+        if (data.bio) formData.append('bio', data.bio);
+        if (data.nivelAcesso) formData.append('nivelAcesso', data.nivelAcesso);
+        if (data.statusUsuario) formData.append('statusUsuario', data.statusUsuario);
+        if (data.senha) formData.append('senha', data.senha); // ✅ Adicionar senha
+        
+        // Log detalhado do FormData
+        console.log('FormData preparado:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+        }
+        
+        const response = await http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+            timeout: 30000,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        console.log('Resposta da edição:', response);
+        
+        if (response && response.data) {
+            // Atualizar localStorage com dados atualizados
+            const currentUser = JSON.parse(localStorage.getItem("user"));
+            const updatedUser = {
+                ...currentUser,
                 nome: data.nome,
                 email: data.email,
-                senha: data.senha,
                 bio: data.bio,
                 nivelAcesso: data.nivelAcesso,
-                statusUsuario: 'ATIVO' // Ativar conta diretamente
+                statusUsuario: data.statusUsuario,
+                isVisitor: false
             };
             
-            console.log('Criando novo usuário com dados atualizados:', novoUsuario);
+            console.log('Usuário atualizado no localStorage:', updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
             
-            // Usar endpoint /create que sabemos que funciona
-            const createResponse = await http.mainInstance.post(API_URL + "create", novoUsuario);
-            console.log('Resposta da criação:', createResponse);
-            
-            if (createResponse && createResponse.data) {
-                // Atualizar localStorage com dados do novo usuário
-                const updatedUser = {
-                    ...currentUser,
-                    ...novoUsuario,
-                    id: currentUser.id, // Manter o ID original
-                    isVisitor: false
-                };
-                
-                console.log('Usuário atualizado no localStorage:', updatedUser);
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-                
-                return {
-                    data: updatedUser,
-                    status: 200
-                };
-            } else {
-                throw new Error('Falha ao criar usuário atualizado');
-            }
+            return {
+                data: updatedUser,
+                status: 200
+            };
         } else {
-            throw new Error('Usuário não encontrado');
+            throw new Error('Falha na edição');
         }
     } catch (error) {
         console.error('Erro ao salvar dados completos:', error);

@@ -166,18 +166,19 @@ function CompletarRegistro() {
       console.log('Evitando endpoint /editar que está com problema');
       
       try {
-        // SOLUÇÃO: Salvar todos os dados no banco usando endpoint /create
-        console.log('Salvando dados completos no banco de dados...');
+        // SOLUÇÃO ÚNICA: Atualizar todos os dados de uma vez via /editar
+        console.log('=== ATUALIZANDO TODOS OS DADOS DE UMA VEZ ===');
         const dadosCompletos = {
           nome: formData.nome.trim(),
           email: formData.email.trim(),
-          senha: formData.senha,
           bio: formData.bio.trim(),
-          nivelAcesso: 'ARTISTA'
+          nivelAcesso: 'ARTISTA',
+          statusUsuario: 'ATIVO',
+          senha: formData.senha // ✅ Incluir senha
         };
         
         const response = await UsuarioService.salvarDadosCompletos(currentUser.id, dadosCompletos);
-        console.log('Resposta da salvamento completo:', response);
+        console.log('Resposta da atualização completa:', response);
         
         if (response && response.data) {
           setSuccess('Registro completado com sucesso! Bem-vindo como Artista!');
@@ -186,17 +187,16 @@ function CompletarRegistro() {
             navigate('/perfil');
           }, 2000);
         } else {
-          console.error('Resposta inválida do servidor:', response);
-          throw new Error('Resposta inválida do servidor');
+          throw new Error('Falha na atualização completa');
         }
-      } catch (saveError) {
-        console.error('Erro ao salvar dados:', saveError);
+      } catch (updateError) {
+        console.error('Erro na atualização:', updateError);
         console.error('Detalhes do erro:', {
-          status: saveError.response?.status,
-          data: saveError.response?.data,
-          message: saveError.message
+          status: updateError.response?.status,
+          data: updateError.response?.data,
+          message: updateError.message
         });
-        throw saveError; // Re-throw para ser capturado pelo catch principal
+        throw updateError; // Re-throw para ser capturado pelo catch principal
       }
     } catch (err) {
       console.error('Erro ao completar registro:', err);
