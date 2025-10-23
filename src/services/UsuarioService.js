@@ -257,7 +257,7 @@ const alterarSenha = (id, data) => {
     });
 };
 
-// Método para salvar dados completos no banco usando endpoint /create
+// Método para salvar dados completos no banco
 const salvarDadosCompletos = async (id, data) => {
     console.log('=== SALVANDO DADOS COMPLETOS NO BANCO ===');
     console.log('ID do usuário:', id);
@@ -335,7 +335,6 @@ const UsuarioService = {
     inativar,
     reativar,
     alterarSenha,
-    atualizarDadosBasicos,
     salvarDadosCompletos,
     findByNome,
 }
