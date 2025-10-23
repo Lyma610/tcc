@@ -272,40 +272,44 @@ const salvarDadosCompletos = async (id, data) => {
         if (currentUserResponse.data) {
             const currentUser = currentUserResponse.data;
             
-            // Criar novo usuário com dados atualizados usando endpoint /create
-            const novoUsuario = {
+            // Primeiro, atualizar dados básicos localmente
+            const updatedUser = {
+                ...currentUser,
                 nome: data.nome,
                 email: data.email,
-                senha: data.senha, // Senha será criptografada no backend
                 bio: data.bio,
                 nivelAcesso: data.nivelAcesso,
-                statusUsuario: 'ATIVO' // Ativar conta
+                isVisitor: false
             };
             
-            console.log('Criando novo usuário com dados atualizados:', novoUsuario);
+            console.log('Atualizando dados básicos localmente:', updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
             
-            // Usar endpoint /create que sabemos que funciona
-            const createResponse = await http.mainInstance.post(API_URL + "create", novoUsuario);
-            console.log('Resposta da criação:', createResponse);
+            // Depois, usar endpoint /alterarSenha para salvar senha e ativar conta
+            console.log('Alterando senha e ativando conta no backend...');
+            const passwordData = {
+                senha: data.senha
+            };
             
-            if (createResponse && createResponse.data) {
-                // Atualizar localStorage com dados do novo usuário
-                const updatedUser = {
-                    ...currentUser,
-                    ...novoUsuario,
-                    id: currentUser.id, // Manter o ID original
-                    isVisitor: false
+            const passwordResponse = await alterarSenha(id, passwordData);
+            console.log('Resposta da alteração de senha:', passwordResponse);
+            
+            if (passwordResponse && passwordResponse.data) {
+                // Atualizar localStorage com status ATIVO
+                const finalUser = {
+                    ...updatedUser,
+                    statusUsuario: 'ATIVO'
                 };
                 
-                console.log('Usuário atualizado no localStorage:', updatedUser);
-                localStorage.setItem("user", JSON.stringify(updatedUser));
+                console.log('Usuário final ativado:', finalUser);
+                localStorage.setItem("user", JSON.stringify(finalUser));
                 
                 return {
-                    data: updatedUser,
+                    data: finalUser,
                     status: 200
                 };
             } else {
-                throw new Error('Falha ao criar usuário atualizado');
+                throw new Error('Falha ao alterar senha e ativar conta');
             }
         } else {
             throw new Error('Usuário não encontrado');
