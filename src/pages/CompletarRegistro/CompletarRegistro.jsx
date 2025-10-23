@@ -165,11 +165,20 @@ function CompletarRegistro() {
       console.log('Atualizando dados básicos:', basicUpdateData);
       
       try {
-        const response = await UsuarioService.editar(currentUser.id, basicUpdateData);
+        // Primeiro, atualizar dados básicos (sem statusUsuario)
+        const basicDataWithoutStatus = {
+          nome: basicUpdateData.nome,
+          email: basicUpdateData.email,
+          bio: basicUpdateData.bio,
+          nivelAcesso: basicUpdateData.nivelAcesso
+        };
+        
+        console.log('Dados para edição (sem status):', basicDataWithoutStatus);
+        const response = await UsuarioService.editar(currentUser.id, basicDataWithoutStatus);
         console.log('Resposta da atualização básica:', response);
         
         if (response && response.data) {
-          // Depois, alterar senha e ativar conta
+          // Depois, alterar senha (que também ativa a conta)
           console.log('Alterando senha e ativando conta...');
           const passwordUpdateData = {
             senha: formData.senha
@@ -181,7 +190,7 @@ function CompletarRegistro() {
           // Atualizar dados no localStorage
           const updatedUser = {
             ...currentUser,
-            ...basicUpdateData,
+            ...basicDataWithoutStatus,
             statusUsuario: 'ATIVO', // Forçar status ATIVO
             isVisitor: false
           };
@@ -195,10 +204,16 @@ function CompletarRegistro() {
             navigate('/perfil');
           }, 2000);
         } else {
+          console.error('Resposta inválida do servidor:', response);
           throw new Error('Resposta inválida do servidor');
         }
       } catch (editError) {
         console.error('Erro na edição:', editError);
+        console.error('Detalhes do erro:', {
+          status: editError.response?.status,
+          data: editError.response?.data,
+          message: editError.message
+        });
         throw editError; // Re-throw para ser capturado pelo catch principal
       }
     } catch (err) {
