@@ -135,10 +135,27 @@ const create = data => {
 
 const editar = async (id, data) => {
     console.log('Enviando dados para edição:', id);
-    return http.multipartInstance.put(API_URL + `editar/${id}`, data, {
+    console.log('Dados sendo enviados:', data);
+    
+    // Se não há arquivo, usar mainInstance (JSON)
+    if (!data.foto && !data.fotoPerfil) {
+        return http.mainInstance.put(API_URL + `editar/${id}`, data, {
+            timeout: 10000 // Timeout de 10 segundos
+        });
+    }
+    
+    // Se há arquivo, usar multipartInstance
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+    
+    return http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
-        timeout: 30000 // Aumentar o timeout para 30 segundos
+        timeout: 10000 // Timeout de 10 segundos
     });
 };
 

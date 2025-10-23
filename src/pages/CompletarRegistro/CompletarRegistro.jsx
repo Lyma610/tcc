@@ -142,11 +142,24 @@ function CompletarRegistro() {
 
       // Primeiro, atualizar dados básicos
       const basicUpdateData = {
-        nome: formData.nome,
-        email: formData.email,
-        bio: formData.bio,
+        nome: formData.nome.trim(),
+        email: formData.email.trim(),
+        bio: formData.bio.trim(),
         nivelAcesso: 'ARTISTA'
       };
+
+      // Validação adicional dos dados
+      if (!basicUpdateData.nome || basicUpdateData.nome.length < 2) {
+        setError('Nome deve ter pelo menos 2 caracteres');
+        setLoading(false);
+        return;
+      }
+
+      if (!basicUpdateData.email || !basicUpdateData.email.includes('@')) {
+        setError('Email inválido');
+        setLoading(false);
+        return;
+      }
 
       console.log('Atualizando dados básicos:', basicUpdateData);
       const response = await UsuarioService.editar(currentUser.id, basicUpdateData);
@@ -182,7 +195,19 @@ function CompletarRegistro() {
       }
     } catch (err) {
       console.error('Erro ao completar registro:', err);
-      setError(err.response?.data?.message || 'Erro ao completar registro. Tente novamente.');
+      
+      // Tratamento específico de erros
+      if (err.response?.status === 500) {
+        setError('Erro interno do servidor. Tente novamente em alguns minutos.');
+      } else if (err.response?.status === 400) {
+        setError('Dados inválidos. Verifique as informações e tente novamente.');
+      } else if (err.response?.status === 404) {
+        setError('Usuário não encontrado. Faça login novamente.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setError(err.response?.data?.message || 'Erro ao completar registro. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
