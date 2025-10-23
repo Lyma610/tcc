@@ -9,27 +9,70 @@ import GeneroService from '../../services/GeneroService';
 
 function Publicar() {
     const _dbRecords = useRef(true);
-    const usuario = UsuarioService.getCurrentUser();
+    // ✅ Buscar dados atualizados do usuário
+    const currentUser = UsuarioService.getCurrentUser();
     
     // Debug: verificar dados do usuário
-    console.log('Dados do usuário atual:', usuario);
-    console.log('nivelAcesso:', usuario?.nivelAcesso);
+    console.log('Dados do usuário atual:', currentUser);
+    console.log('nivelAcesso:', currentUser?.nivelAcesso);
     
     // Verificar se o usuário é visitante baseado no nivelAcesso
-    const isVisitor = usuario?.nivelAcesso === 'VISITANTE' || 
-                     usuario?.nivelAcesso === null ||
-                     usuario?.nivelAcesso === undefined ||
-                     usuario?.nivelAcesso === 'NULL' ||
-                     usuario?.nivelAcesso === 'USER' || // USER também é tratado como visitante por compatibilidade
-                     usuario?.status === 'TerminarRegistro' ||
-                     usuario?.statusUsuario === 'TerminarRegistro' ||
-                     usuario?.isVisitor === true;
+    const isVisitor = currentUser?.nivelAcesso === 'VISITANTE' || 
+                     currentUser?.nivelAcesso === null ||
+                     currentUser?.nivelAcesso === undefined ||
+                     currentUser?.nivelAcesso === 'NULL' ||
+                     currentUser?.nivelAcesso === 'USER' || // USER também é tratado como visitante por compatibilidade
+                     currentUser?.status === 'TerminarRegistro' ||
+                     currentUser?.statusUsuario === 'TerminarRegistro' ||
+                     currentUser?.isVisitor === true;
+    
+    // ✅ Se o usuário tem nivelAcesso ARTISTA, não é visitante
+    const isArtist = currentUser?.nivelAcesso === 'ARTISTA';
+    
+    // ✅ Atualizar isVisitor se for ARTISTA
+    const finalIsVisitor = isArtist ? false : isVisitor;
     
     console.log('isVisitor:', isVisitor);
-    console.log('nivelAcesso do usuário:', usuario?.nivelAcesso);
+    console.log('isArtist:', isArtist);
+    console.log('finalIsVisitor:', finalIsVisitor);
+    console.log('nivelAcesso do usuário:', currentUser?.nivelAcesso);
 
     const [activeStep, setActiveStep] = useState(1);
     const [formData, setFormData] = useState({ legenda: '', descricao: '', categoria: null, genero: null, file: null });
+    const [userUpdated, setUserUpdated] = useState(false);
+
+    // ✅ Verificar e atualizar dados do usuário ao carregar a página
+    useEffect(() => {
+        const checkUserStatus = async () => {
+            try {
+                // Buscar dados atualizados do usuário
+                const currentUser = UsuarioService.getCurrentUser();
+                if (currentUser && currentUser.id) {
+                    const userData = await UsuarioService.getCurrentUserFull();
+                    if (userData && userData.data) {
+                        console.log('Dados atualizados do usuário:', userData.data);
+                        
+                        // Se o usuário tem nivelAcesso ARTISTA, atualizar localStorage
+                        if (userData.data.nivelAcesso === 'ARTISTA') {
+                            const updatedUser = {
+                                ...currentUser,
+                                nivelAcesso: 'ARTISTA',
+                                statusUsuario: 'ATIVO',
+                                isVisitor: false
+                            };
+                            localStorage.setItem("user", JSON.stringify(updatedUser));
+                            console.log('✅ Usuário atualizado para ARTISTA no localStorage');
+                            setUserUpdated(true); // ✅ Forçar re-renderização
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status do usuário:', error);
+            }
+        };
+
+        checkUserStatus();
+    }, []);
 
     const [dragActive, setDragActive] = useState(false);
     const [preview, setPreview] = useState(null);
@@ -83,7 +126,7 @@ function Publicar() {
         if (!formData.legenda) { alert('Por favor, adicione um título'); return; }
         if (!formData.file) { alert('Por favor, selecione um arquivo'); return; }
         setIsUploading(true);
-        PostagemService.create(formData.file, formData, usuario)
+        PostagemService.create(formData.file, formData, currentUser)
             .then(() => { setIsUploading(false); alert('🎉 Conteúdo publicado com sucesso!'); setPreview(null); setActiveStep(1); setFormData({ legenda: '', descricao: '', categoria: null, genero: null, file: null }); })
             .catch((error) => { setIsUploading(false); console.error('Erro ao publicar:', error); const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString(); alert('Erro ao publicar: ' + resMessage); });
     };
@@ -92,7 +135,7 @@ function Publicar() {
     const prevStep = () => { if (activeStep > 1) setActiveStep(activeStep - 1); };
 
     // Se for visitante, mostrar tela de bloqueio
-    if (isVisitor) {
+    if (finalIsVisitor) {
         return (
             <div className="home-layout">
                 <Sidebar />

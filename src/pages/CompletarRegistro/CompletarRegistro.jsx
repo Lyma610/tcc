@@ -181,6 +181,15 @@ function CompletarRegistro() {
         console.log('Resposta da atualização completa:', response);
         
         if (response && response.data) {
+          // ✅ Garantir que o nivelAcesso seja ARTISTA
+          console.log('🔍 Verificando nivelAcesso após atualização...');
+          try {
+            const garantia = await UsuarioService.garantirNivelAcessoArtista(currentUser.id);
+            console.log('✅ Garantia de nivelAcesso ARTISTA:', garantia);
+          } catch (garantiaError) {
+            console.error('⚠️ Erro na garantia de nivelAcesso:', garantiaError);
+          }
+          
           setSuccess('Registro completado com sucesso! Bem-vindo como Artista!');
           
           setTimeout(() => {

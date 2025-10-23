@@ -138,15 +138,6 @@ const editar = async (id, data) => {
     console.log('ID do usuário:', id);
     console.log('Dados recebidos:', data);
     
-    // Verificar se a API está respondendo
-    try {
-        console.log('Verificando saúde da API...');
-        await http.mainInstance.get('usuario/findAll');
-        console.log('API está respondendo');
-    } catch (healthError) {
-        console.warn('API pode estar com problemas:', healthError.message);
-    }
-    
     // Tentar primeiro com FormData (como o backend espera)
     const formData = new FormData();
     
@@ -170,6 +161,10 @@ const editar = async (id, data) => {
     if (data.statusUsuario) {
         formData.append('statusUsuario', data.statusUsuario);
         console.log('Adicionado statusUsuario:', data.statusUsuario);
+    }
+    if (data.senha) {
+        formData.append('senha', data.senha);
+        console.log('Adicionado senha:', '***');
     }
     
     // Se há arquivo, adicionar
@@ -204,23 +199,7 @@ const editar = async (id, data) => {
         console.error('Status do erro:', error.response?.status);
         console.error('Dados do erro:', error.response?.data);
         console.error('Headers do erro:', error.response?.headers);
-        
-        // Se FormData falhar, tentar com JSON (fallback)
-        console.log('Tentando fallback com JSON...');
-        try {
-            const jsonResponse = await http.mainInstance.put(API_URL + `editar/${id}`, data, {
-                timeout: 20000, // 20 segundos para Render
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-            console.log('Resposta JSON do servidor:', jsonResponse);
-            return jsonResponse;
-        } catch (jsonError) {
-            console.error('Erro também com JSON:', jsonError);
-            throw error; // Lançar o erro original do FormData
-        }
+        throw error;
     }
 };
 
@@ -271,11 +250,25 @@ const salvarDadosCompletos = async (id, data) => {
         if (data.nome) formData.append('nome', data.nome);
         if (data.email) formData.append('email', data.email);
         if (data.bio) formData.append('bio', data.bio);
-        if (data.nivelAcesso) formData.append('nivelAcesso', data.nivelAcesso);
+        // ✅ Sempre adicionar nivelAcesso, forçando ARTISTA se necessário
+        let nivelAcessoFinal = data.nivelAcesso || 'ARTISTA';
+        
+        // ✅ Se estiver completando registro, forçar ARTISTA
+        if (data.statusUsuario === 'ATIVO' || data.status === 'ATIVO') {
+            nivelAcessoFinal = 'ARTISTA';
+            console.log('🎯 Completando registro - forçando nivelAcesso para ARTISTA');
+        }
+        
+        formData.append('nivelAcesso', nivelAcessoFinal);
+        console.log('🔧 nivelAcesso final que será enviado:', nivelAcessoFinal);
         if (data.statusUsuario) formData.append('statusUsuario', data.statusUsuario);
         if (data.senha) formData.append('senha', data.senha); // ✅ Adicionar senha
         
         // Log detalhado do FormData
+        console.log('=== FORM DATA PREPARADO ===');
+        console.log('Dados recebidos:', data);
+        console.log('nivelAcesso recebido:', data.nivelAcesso);
+        console.log('nivelAcesso que será enviado:', data.nivelAcesso || 'ARTISTA');
         console.log('FormData preparado:');
         for (let [key, value] of formData.entries()) {
             console.log(`${key}:`, value);
@@ -292,6 +285,23 @@ const salvarDadosCompletos = async (id, data) => {
         
         console.log('Resposta da edição:', response);
         
+        // ✅ Verificar se o nivelAcesso foi atualizado corretamente
+        if (response && response.data) {
+            console.log('✅ Dados retornados pelo backend:', response.data);
+            console.log('✅ nivelAcesso no retorno:', response.data.nivelAcesso);
+            
+            // ✅ Se nivelAcesso não foi atualizado, forçar ARTISTA
+            if (!response.data.nivelAcesso || response.data.nivelAcesso !== 'ARTISTA') {
+                console.log('⚠️ nivelAcesso não foi atualizado corretamente, forçando...');
+                try {
+                    await forcarNivelAcessoArtista(id);
+                    console.log('✅ nivelAcesso forçado para ARTISTA com sucesso');
+                } catch (forceError) {
+                    console.error('❌ Erro ao forçar nivelAcesso:', forceError);
+                }
+            }
+        }
+        
         if (response && response.data) {
             // Atualizar localStorage com dados atualizados
             const currentUser = JSON.parse(localStorage.getItem("user"));
@@ -300,12 +310,16 @@ const salvarDadosCompletos = async (id, data) => {
                 nome: data.nome,
                 email: data.email,
                 bio: data.bio,
-                nivelAcesso: data.nivelAcesso,
+                nivelAcesso: nivelAcessoFinal, // ✅ Usar o nivelAcesso que foi enviado
                 statusUsuario: data.statusUsuario,
-                isVisitor: false
+                isVisitor: false,
+                // ✅ Garantir que não seja mais visitante
+                status: 'ATIVO', // Remover status de TerminarRegistro
+                statusUsuario: 'ATIVO' // Forçar status ATIVO
             };
             
-            console.log('Usuário atualizado no localStorage:', updatedUser);
+            console.log('🔄 Usuário atualizado no localStorage:', updatedUser);
+            console.log('🔄 nivelAcesso no localStorage:', updatedUser.nivelAcesso);
             localStorage.setItem("user", JSON.stringify(updatedUser));
             
             return {
@@ -325,6 +339,64 @@ const findByNome = nome => {
     return http.mainInstance.get(API_URL + `findByNome?nome=${nome}`);
 };
 
+// ✅ Método específico para forçar nivelAcesso ARTISTA
+const forcarNivelAcessoArtista = async (id) => {
+    try {
+        console.log('🎯 Forçando nivelAcesso para ARTISTA no usuário:', id);
+        
+        const formData = new FormData();
+        formData.append('nivelAcesso', 'ARTISTA');
+        formData.append('statusUsuario', 'ATIVO');
+        
+        const response = await http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+            timeout: 30000,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        console.log('✅ nivelAcesso forçado para ARTISTA:', response.data);
+        return response;
+    } catch (error) {
+        console.error('❌ Erro ao forçar nivelAcesso:', error);
+        throw error;
+    }
+};
+
+// ✅ Método para garantir que o usuário seja ARTISTA
+const garantirNivelAcessoArtista = async (id) => {
+    try {
+        console.log('🔍 Verificando nivelAcesso do usuário:', id);
+        
+        // Primeiro, buscar dados atuais do usuário
+        const userResponse = await findById(id);
+        const currentNivelAcesso = userResponse?.data?.nivelAcesso;
+        
+        console.log('📊 nivelAcesso atual no banco:', currentNivelAcesso);
+        
+        // Se não for ARTISTA, forçar atualização
+        if (currentNivelAcesso !== 'ARTISTA') {
+            console.log('🔄 nivelAcesso não é ARTISTA, forçando atualização...');
+            await forcarNivelAcessoArtista(id);
+            
+            // Verificar novamente
+            const verifyResponse = await findById(id);
+            const newNivelAcesso = verifyResponse?.data?.nivelAcesso;
+            console.log('✅ nivelAcesso após forçar:', newNivelAcesso);
+            
+            return newNivelAcesso === 'ARTISTA';
+        } else {
+            console.log('✅ nivelAcesso já é ARTISTA');
+            return true;
+        }
+    } catch (error) {
+        console.error('❌ Erro ao garantir nivelAcesso ARTISTA:', error);
+        throw error;
+    }
+};
+
 
 const UsuarioService = {
     findAll,
@@ -342,6 +414,8 @@ const UsuarioService = {
     alterarSenha,
     salvarDadosCompletos,
     findByNome,
+    forcarNivelAcessoArtista,
+    garantirNivelAcessoArtista,
 }
 
 export default UsuarioService;

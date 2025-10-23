@@ -168,17 +168,20 @@ function Perfil() {
 
   const handleEditSubmit = async () => {
     try {
-      const formData = new FormData();
-      formData.append('nome', editForm.nome || '');
-      formData.append('email', editForm.email || '');
-      formData.append('bio', editForm.bio || '');
+      // Preparar dados para edição (sem senha)
+      const editData = {
+        nome: editForm.nome || '',
+        email: editForm.email || '',
+        bio: editForm.bio || ''
+      };
 
-      const compressedFile = compressedFileRef.current;
-      if (compressedFile) {
-        formData.append('file', compressedFile);
+      // Se há arquivo, adicionar
+      if (compressedFileRef.current) {
+        editData.foto = compressedFileRef.current;
       }
 
-      await UsuarioService.editar(userInfo.id, formData);
+      console.log('Editando perfil com dados:', editData);
+      await UsuarioService.editar(userInfo.id, editData);
 
       const updatedUserData = await UsuarioService.getCurrentUserFull();
       if (updatedUserData) {
@@ -406,6 +409,7 @@ function Perfil() {
                   className="form-input"
                 />
               </div>
+
 
 
               <button
