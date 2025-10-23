@@ -134,31 +134,94 @@ const create = data => {
 };
 
 const editar = async (id, data) => {
-    console.log('Enviando dados para edição:', id);
-    console.log('Dados sendo enviados:', data);
+    console.log('=== EDITANDO USUÁRIO ===');
+    console.log('ID do usuário:', id);
+    console.log('Dados recebidos:', data);
     
-    // O backend espera FormData sempre, mesmo sem arquivo
+    // Verificar se a API está respondendo
+    try {
+        console.log('Verificando saúde da API...');
+        await http.mainInstance.get('usuario/findAll');
+        console.log('API está respondendo');
+    } catch (healthError) {
+        console.warn('API pode estar com problemas:', healthError.message);
+    }
+    
+    // Tentar primeiro com FormData (como o backend espera)
     const formData = new FormData();
     
     // Adicionar todos os campos como strings
-    if (data.nome) formData.append('nome', data.nome);
-    if (data.email) formData.append('email', data.email);
-    if (data.bio) formData.append('bio', data.bio);
-    if (data.nivelAcesso) formData.append('nivelAcesso', data.nivelAcesso);
-    if (data.statusUsuario) formData.append('statusUsuario', data.statusUsuario);
+    if (data.nome) {
+        formData.append('nome', data.nome);
+        console.log('Adicionado nome:', data.nome);
+    }
+    if (data.email) {
+        formData.append('email', data.email);
+        console.log('Adicionado email:', data.email);
+    }
+    if (data.bio) {
+        formData.append('bio', data.bio);
+        console.log('Adicionado bio:', data.bio);
+    }
+    if (data.nivelAcesso) {
+        formData.append('nivelAcesso', data.nivelAcesso);
+        console.log('Adicionado nivelAcesso:', data.nivelAcesso);
+    }
+    if (data.statusUsuario) {
+        formData.append('statusUsuario', data.statusUsuario);
+        console.log('Adicionado statusUsuario:', data.statusUsuario);
+    }
     
     // Se há arquivo, adicionar
     if (data.foto && data.foto instanceof File) {
         formData.append('file', data.foto);
+        console.log('Adicionado arquivo:', data.foto.name);
     }
     
-    console.log('FormData preparado:', formData);
+    // Log do FormData
+    console.log('FormData preparado:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
     
-    return http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 10000 // Timeout de 10 segundos
-    });
+    console.log('URL da requisição:', API_URL + `editar/${id}`);
+    
+    try {
+        const response = await http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+            timeout: 30000, // 30 segundos para Render
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
+            }
+        });
+        
+        console.log('Resposta do servidor:', response);
+        return response;
+    } catch (error) {
+        console.error('Erro na requisição FormData:', error);
+        console.error('Status do erro:', error.response?.status);
+        console.error('Dados do erro:', error.response?.data);
+        console.error('Headers do erro:', error.response?.headers);
+        
+        // Se FormData falhar, tentar com JSON (fallback)
+        console.log('Tentando fallback com JSON...');
+        try {
+            const jsonResponse = await http.mainInstance.put(API_URL + `editar/${id}`, data, {
+                timeout: 20000, // 20 segundos para Render
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('Resposta JSON do servidor:', jsonResponse);
+            return jsonResponse;
+        } catch (jsonError) {
+            console.error('Erro também com JSON:', jsonError);
+            throw error; // Lançar o erro original do FormData
+        }
+    }
 };
 
 

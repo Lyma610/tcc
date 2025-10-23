@@ -163,36 +163,43 @@ function CompletarRegistro() {
       }
 
       console.log('Atualizando dados básicos:', basicUpdateData);
-      const response = await UsuarioService.editar(currentUser.id, basicUpdateData);
       
-      console.log('Resposta da atualização básica:', response);
-      
-      if (response) {
-        // Depois, alterar senha e ativar conta
-        console.log('Alterando senha e ativando conta...');
-        const passwordUpdateData = {
-          senha: formData.senha
-        };
+      try {
+        const response = await UsuarioService.editar(currentUser.id, basicUpdateData);
+        console.log('Resposta da atualização básica:', response);
         
-        const passwordResponse = await UsuarioService.alterarSenha(currentUser.id, passwordUpdateData);
-        console.log('Resposta da alteração de senha:', passwordResponse);
+        if (response && response.data) {
+          // Depois, alterar senha e ativar conta
+          console.log('Alterando senha e ativando conta...');
+          const passwordUpdateData = {
+            senha: formData.senha
+          };
+          
+          const passwordResponse = await UsuarioService.alterarSenha(currentUser.id, passwordUpdateData);
+          console.log('Resposta da alteração de senha:', passwordResponse);
         
-        // Atualizar dados no localStorage
-        const updatedUser = {
-          ...currentUser,
-          ...basicUpdateData,
-          statusUsuario: 'ATIVO', // Forçar status ATIVO
-          isVisitor: false
-        };
-        
-        console.log('Usuário atualizado no localStorage:', updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        
-        setSuccess('Registro completado com sucesso! Bem-vindo como Artista!');
-        
-        setTimeout(() => {
-          navigate('/perfil');
-        }, 2000);
+          // Atualizar dados no localStorage
+          const updatedUser = {
+            ...currentUser,
+            ...basicUpdateData,
+            statusUsuario: 'ATIVO', // Forçar status ATIVO
+            isVisitor: false
+          };
+          
+          console.log('Usuário atualizado no localStorage:', updatedUser);
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          
+          setSuccess('Registro completado com sucesso! Bem-vindo como Artista!');
+          
+          setTimeout(() => {
+            navigate('/perfil');
+          }, 2000);
+        } else {
+          throw new Error('Resposta inválida do servidor');
+        }
+      } catch (editError) {
+        console.error('Erro na edição:', editError);
+        throw editError; // Re-throw para ser capturado pelo catch principal
       }
     } catch (err) {
       console.error('Erro ao completar registro:', err);
