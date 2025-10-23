@@ -137,20 +137,22 @@ const editar = async (id, data) => {
     console.log('Enviando dados para edição:', id);
     console.log('Dados sendo enviados:', data);
     
-    // Se não há arquivo, usar mainInstance (JSON)
-    if (!data.foto && !data.fotoPerfil) {
-        return http.mainInstance.put(API_URL + `editar/${id}`, data, {
-            timeout: 10000 // Timeout de 10 segundos
-        });
+    // O backend espera FormData sempre, mesmo sem arquivo
+    const formData = new FormData();
+    
+    // Adicionar todos os campos como strings
+    if (data.nome) formData.append('nome', data.nome);
+    if (data.email) formData.append('email', data.email);
+    if (data.bio) formData.append('bio', data.bio);
+    if (data.nivelAcesso) formData.append('nivelAcesso', data.nivelAcesso);
+    if (data.statusUsuario) formData.append('statusUsuario', data.statusUsuario);
+    
+    // Se há arquivo, adicionar
+    if (data.foto && data.foto instanceof File) {
+        formData.append('file', data.foto);
     }
     
-    // Se há arquivo, usar multipartInstance
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-        if (data[key] !== null && data[key] !== undefined) {
-            formData.append(key, data[key]);
-        }
-    });
+    console.log('FormData preparado:', formData);
     
     return http.multipartInstance.put(API_URL + `editar/${id}`, formData, {
         maxContentLength: Infinity,
@@ -184,6 +186,9 @@ const reativar = (id) => {
 };
 
 const alterarSenha = (id, data) => {
+    console.log('Alterando senha para usuário:', id);
+    console.log('Dados da senha:', data);
+    
     return http.mainInstance.put(API_URL + `alterarSenha/${id}`, {
         senha: data.senha
     });

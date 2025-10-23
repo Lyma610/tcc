@@ -145,7 +145,8 @@ function CompletarRegistro() {
         nome: formData.nome.trim(),
         email: formData.email.trim(),
         bio: formData.bio.trim(),
-        nivelAcesso: 'ARTISTA'
+        nivelAcesso: 'ARTISTA',
+        statusUsuario: 'ATIVO' // Ativar conta
       };
 
       // Validação adicional dos dados
